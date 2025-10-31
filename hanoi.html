@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tower of Hanoi</title>
+    
+    <!-- Load dependencies BEFORE any other scripts -->
+    <script src="telegram-web-app-mock.js"></script>
+    <script src="game-interface.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #48bb78;
+            --warning-color: #ed8936;
+            --danger-color: #f56565;
+            
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            
+            --disk-1: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --disk-2: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --disk-3: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --disk-4: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --disk-5: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+            --disk-6: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            
+            --tower-pole-width: 8px;
+            --tower-base-height: 15px;
+            --disk-height: 28px;
+            --disk-spacing: 4px;
+            --tower-height: 350px;
+            
+            /* Set to 'block' to show debug */
+            --debug-display: block;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .game-header {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-title {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+        }
+
+        .difficulty-badge {
+            display: block;
+            text-align: center;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            margin: 0 auto 15px;
+            width: fit-content;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .diff-1 { background: linear-gradient(135deg, #48bb78, #38a169); }
+        .diff-2 { background: linear-gradient(135deg, #ed8936, #dd6b20); }
+        .diff-3 { background: linear-gradient(135deg, #f56565, #e53e3e); }
+        .diff-4 { background: linear-gradient(135deg, #9f7aea, #805ad5); }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
+            padding: 12px 8px;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #666;
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .timer {
+            font-size: 28px;
+            font-weight: 800;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        .timer.warning {
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .game-container {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 25px 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .towers-container {
+            background: linear-gradient(180deg, rgba(102, 126, 234, 0.05) 0%, transparent 100%);
+            border-radius: 15px;
+            padding: 20px 10px;
+            margin-bottom: 20px;
+            min-height: calc(var(--tower-height) + 40px);
+        }
+
+        .towers {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            height: var(--tower-height);
+            position: relative;
+            padding: 0 5px;
+        }
+
+        .tower {
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            width: 32%;
+            height: 100%;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .tower:active {
+            transform: scale(0.98);
+        }
+
+        .tower-pole {
+            width: var(--tower-pole-width);
+            height: calc(100% - var(--tower-base-height));
+            background: linear-gradient(180deg, #a0aec0 0%, #4a5568 100%);
+            position: absolute;
+            bottom: var(--tower-base-height);
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 4px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+            z-index: 1;
+        }
+
+        .tower-base {
+            width: 100%;
+            height: var(--tower-base-height);
+            background: linear-gradient(180deg, #4a5568, #2d3748);
+            border-radius: 6px;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            z-index: 1;
+        }
+
+        .disk {
+            height: var(--disk-height);
+            border-radius: 12px;
+            margin-bottom: var(--disk-spacing);
+            position: relative;
+            z-index: 10;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 
+                0 4px 8px rgba(0, 0, 0, 0.3),
+                inset 0 2px 4px rgba(255, 255, 255, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            cursor: grab;
+        }
+
+        .disk::before {
+            content: '';
+            position: absolute;
+            top: 20%;
+            left: 10%;
+            right: 50%;
+            height: 30%;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.4), transparent);
+            border-radius: 12px 0 0 12px;
+        }
+
+        .disk:active { cursor: grabbing; }
+
+        .disk-1 { width: 35%; min-width: 70px; background: var(--disk-1); }
+        .disk-2 { width: 50%; min-width: 90px; background: var(--disk-2); }
+        .disk-3 { width: 65%; min-width: 110px; background: var(--disk-3); }
+        .disk-4 { width: 80%; min-width: 130px; background: var(--disk-4); }
+        .disk-5 { width: 92%; min-width: 150px; background: var(--disk-5); }
+        .disk-6 { width: 98%; min-width: 170px; background: var(--disk-6); }
+
+        .selected {
+            transform: translateY(-25px) scale(1.1);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(102, 126, 234, 0.6);
+            filter: brightness(1.2);
+            z-index: 100 !important;
+        }
+
+        .highlight {
+            background: rgba(72, 187, 120, 0.3);
+            animation: glow 1s infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 10px rgba(72, 187, 120, 0.5); }
+            50% { box-shadow: 0 0 25px rgba(72, 187, 120, 0.8); }
+        }
+
+        .invalid { animation: shake 0.4s; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+            20%, 40%, 60%, 80% { transform: translateX(8px); }
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        button {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active { transform: scale(0.95); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-primary { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); }
+        .btn-secondary { background: linear-gradient(135deg, var(--warning-color), #dd6b20); }
+        .btn-success { background: linear-gradient(135deg, var(--success-color), #38a169); }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.show { display: flex; }
+
+        .modal-content {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 25px;
+            text-align: center;
+            max-width: 350px;
+            width: 90%;
+            animation: slideUp 0.5s;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal h2 {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            font-size: 32px;
+        }
+
+        .modal p {
+            color: #4a5568;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .rating {
+            font-size: 80px;
+            margin: 20px 0;
+        }
+
+        .debug-info {
+            display: var(--debug-display);
+            background: rgba(0, 0, 0, 0.8);
+            color: #68d391;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 11px;
+            margin-top: 12px;
+            font-family: monospace;
+            line-height: 1.6;
+        }
+
+        .debug-info strong {
+            color: #63b3ed;
+        }
+
+        .error {
+            background: #fee;
+            color: #c00;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="app">
+        <div class="game-header">
+            <div class="game-title">🗼 Tower of Hanoi</div>
+            <div class="difficulty-badge" id="difficultyBadge">Loading...</div>
+            
+            <div class="timer" id="timer">Ready</div>
+            
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span class="stat-label">Moves</span>
+                    <span class="stat-value" id="moves">0</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Optimal</span>
+                    <span class="stat-value" id="optimal">-</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Hints</span>
+                    <span class="stat-value" id="hints">-</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Score</span>
+                    <span class="stat-value" id="score">0</span>
+                </div>
+            </div>
+
+            <div class="debug-info" id="debugInfo">Loading...</div>
+        </div>
+
+        <div class="game-container">
+            <div class="towers-container">
+                <div class="towers" id="towers">
+                    <div class="tower" data-tower="0">
+                        <div class="tower-pole"></div>
+                        <div class="tower-base"></div>
+                    </div>
+                    <div class="tower" data-tower="1">
+                        <div class="tower-pole"></div>
+                        <div class="tower-base"></div>
+                    </div>
+                    <div class="tower" data-tower="2">
+                        <div class="tower-pole"></div>
+                        <div class="tower-base"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn-primary" id="restartBtn">🔄 Restart</button>
+                <button class="btn-secondary" id="hintBtn">💡 Hint</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="winModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">🎉 Victory!</h2>
+            <div class="rating" id="modalRating">A</div>
+            <p id="modalMoves"></p>
+            <p id="modalTime"></p>
+            <p id="modalScore"></p>
+            <p id="modalMessage"></p>
+            <button class="btn-success" id="playAgainBtn">🎮 Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        console.log('🎮 Hanoi Game Starting...');
+        console.log('Telegram:', window.Telegram ? '✅' : '❌');
+        console.log('TelegramMiniGame:', window.TelegramMiniGame ? '✅' : '❌');
+
+        // Check dependencies
+        if (!window.Telegram || !window.TelegramMiniGame) {
+            document.getElementById('app').innerHTML = `
+                <div class="error">
+                    <h2>❌ Error Loading Game</h2>
+                    <p>Missing dependencies:</p>
+                    <p>${!window.Telegram ? '❌ telegram-web-app-mock.js' : '✅ Telegram OK'}</p>
+                    <p>${!window.TelegramMiniGame ? '❌ game-interface.js' : '✅ Framework OK'}</p>
+                    <p><small>Check browser console for details</small></p>
+                </div>
+            `;
+            throw new Error('Missing dependencies');
+        }
+
+        class HanoiGame extends TelegramMiniGame {
+            constructor() {
+                console.log('🏗️ Creating HanoiGame...');
+                
+                super({
+                    gameId: 'hanoi',
+                    gameName: 'Tower of Hanoi',
+                    custom: { numDisks: 3 }
+                });
+
+                this.towers = [[], [], []];
+                this.selectedTower = null;
+                this.timerInterval = null;
+                
+                this.showDebugInfo();
+                this.setupDifficulty();
+                this.initGame();
+                this.setupEventHandlers();
+                
+                console.log('✅ HanoiGame created successfully!');
+            }
+
+            setupEventHandlers() {
+                document.querySelectorAll('.tower').forEach((tower, index) => {
+                    tower.addEventListener('click', () => this.selectTower(index));
+                });
+                
+                document.getElementById('restartBtn').addEventListener('click', () => this.restart());
+                document.getElementById('hintBtn').addEventListener('click', () => this.useHint());
+                document.getElementById('playAgainBtn').addEventListener('click', () => this.closeModal());
+                
+                console.log('✅ Event handlers attached');
+            }
+
+            showDebugInfo() {
+                const debugEl = document.getElementById('debugInfo');
+                debugEl.innerHTML = `
+                    <strong>⚙️ Configuration:</strong><br>
+                    Difficulty: ${this.config.difficulty} | 
+                    Disks: ${this.config.custom.numDisks} | 
+                    Time: ${this.config.timeLimit || '∞'}s (×${this.config.timeModifier})<br>
+                    Hints: ${this.config.hintsCount} | 
+                    Session: ${this.config.sessionId}
+                `;
+            }
+
+            setupDifficulty() {
+                const diskMap = { 1: 3, 2: 4, 3: 5, 4: 6 };
+                this.config.custom.numDisks = diskMap[this.config.difficulty] || 3;
+                
+                const diffNames = ['Easy', 'Medium', 'Hard', 'Expert'];
+                const badge = document.getElementById('difficultyBadge');
+                badge.textContent = `${diffNames[this.config.difficulty - 1]} (${this.config.custom.numDisks} disks)`;
+                badge.className = `difficulty-badge diff-${this.config.difficulty}`;
+                
+                console.log(`🎯 Setup: ${diffNames[this.config.difficulty - 1]} - ${this.config.custom.numDisks} disks`);
+            }
+
+            initGame() {
+                console.log('🎮 Initializing game...');
+                
+                this.towers = [[], [], []];
+                for (let i = this.config.custom.numDisks; i >= 1; i--) {
+                    this.towers[0].push(i);
+                }
+                
+                this.state.moves = 0;
+                this.state.mistakes = 0;
+                this.state.hintsUsed = 0;
+                this.state.score = 0;
+                
+                this.updateDisplay();
+                this.updateStats();
+                this.start();
+                this.startTimer();
+                
+                const optimal = Math.pow(2, this.config.custom.numDisks) - 1;
+                document.getElementById('optimal').textContent = optimal;
+                document.getElementById('hints').textContent = this.config.hintsCount;
+                
+                const hintBtn = document.getElementById('hintBtn');
+                hintBtn.disabled = this.config.hintsCount === 0;
+                hintBtn.textContent = this.config.hintsCount === 0 ? '💡 No Hints' : '💡 Hint';
+                
+                console.log('✅ Game initialized! Towers:', this.towers);
+            }
+
+            startTimer() {
+                clearInterval(this.timerInterval);
+                const timerEl = document.getElementById('timer');
+                
+                if (!this.config.timeLimit) {
+                    timerEl.textContent = '♾️ No Limit';
+                    return;
+                }
+                
+                this.timerInterval = setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - this.state.startTime) / 1000);
+                    const remaining = this.config.timeLimit - elapsed;
+                    
+                    if (remaining <= 0) {
+                        clearInterval(this.timerInterval);
+                        timerEl.textContent = '⏰ 0:00';
+                        this.gameOver(false);
+                        return;
+                    }
+                    
+                    const mins = Math.floor(remaining / 60);
+                    const secs = remaining % 60;
+                    timerEl.textContent = `⏱️ ${mins}:${secs.toString().padStart(2, '0')}`;
+                    timerEl.classList.toggle('warning', remaining <= 30);
+                }, 1000);
+            }
+
+            selectTower(index) {
+                console.log(`🎯 Tower ${index} clicked`);
+                
+                if (this.state.status !== 'playing') return;
+
+                if (this.selectedTower === null) {
+                    if (this.towers[index].length > 0) {
+                        this.selectedTower = index;
+                        this.highlightDisk(index, true);
+                        this.highlightValidTargets();
+                        
+                        if (this.config.hapticsEnabled) {
+                            this.tg.HapticFeedback.selectionChanged();
+                        }
+                    }
+                } else {
+                    if (this.selectedTower === index) {
+                        this.deselectTower();
+                    } else if (this.canMove(this.selectedTower, index)) {
+                        this.moveDisk(this.selectedTower, index);
+                        this.state.moves++;
+                        this.updateStats();
+                        this.deselectTower();
+                        
+                        if (this.config.hapticsEnabled) {
+                            this.tg.HapticFeedback.impactOccurred('light');
+                        }
+                        
+                        if (this.checkWin()) {
+                            setTimeout(() => this.gameOver(true), 300);
+                        }
+                    } else {
+                        this.state.mistakes++;
+                        const tower = document.querySelector(`[data-tower="${index}"]`);
+                        tower.classList.add('invalid');
+                        setTimeout(() => tower.classList.remove('invalid'), 400);
+                        
+                        if (this.config.hapticsEnabled) {
+                            this.tg.HapticFeedback.notificationOccurred('error');
+                        }
+                    }
+                }
+            }
+
+            deselectTower() {
+                if (this.selectedTower !== null) {
+                    this.highlightDisk(this.selectedTower, false);
+                    this.clearHighlights();
+                    this.selectedTower = null;
+                }
+            }
+
+            canMove(from, to) {
+                if (this.towers[from].length === 0) return false;
+                if (this.towers[to].length === 0) return true;
+                return this.towers[from][this.towers[from].length - 1] < 
+                       this.towers[to][this.towers[to].length - 1];
+            }
+
+            moveDisk(from, to) {
+                const disk = this.towers[from].pop();
+                this.towers[to].push(disk);
+                this.updateDisplay();
+                this.sendEvent('disk_moved', { from, to, disk, moves: this.state.moves });
+            }
+
+            updateDisplay() {
+                console.log('🔄 Updating display...', this.towers);
+                
+                document.querySelectorAll('.tower').forEach((towerEl, index) => {
+                    towerEl.querySelectorAll('.disk').forEach(d => d.remove());
+                    
+                    this.towers[index].forEach(size => {
+                        const disk = document.createElement('div');
+                        disk.className = `disk disk-${size}`;
+                        const pole = towerEl.querySelector('.tower-pole');
+                        towerEl.insertBefore(disk, pole);
+                    });
+                });
+            }
+
+            highlightDisk(towerIndex, highlight) {
+                const tower = document.querySelector(`[data-tower="${towerIndex}"]`);
+                const disks = Array.from(tower.querySelectorAll('.disk'));
+                const topDisk = disks[disks.length - 1];
+                if (topDisk) {
+                    topDisk.classList.toggle('selected', highlight);
+                }
+            }
+
+            highlightValidTargets() {
+                for (let i = 0; i < 3; i++) {
+                    if (i !== this.selectedTower && this.canMove(this.selectedTower, i)) {
+                        document.querySelector(`[data-tower="${i}"]`).classList.add('highlight');
+                    }
+                }
+            }
+
+            clearHighlights() {
+                document.querySelectorAll('.tower').forEach(t => t.classList.remove('highlight'));
+            }
+
+            useHint() {
+                if (this.state.hintsUsed >= this.config.hintsCount) {
+                    alert('No hints remaining!');
+                    return;
+                }
+                
+                this.state.hintsUsed++;
+                document.getElementById('hints').textContent = this.config.hintsCount - this.state.hintsUsed;
+                
+                const move = this.findValidMove();
+                if (move) {
+                    alert(`💡 Move from Tower ${move.from + 1} to Tower ${move.to + 1}`);
+                }
+                
+                if (this.state.hintsUsed >= this.config.hintsCount) {
+                    document.getElementById('hintBtn').disabled = true;
+                    document.getElementById('hintBtn').textContent = '💡 No Hints';
+                }
+            }
+
+            findValidMove() {
+                for (let from = 0; from < 3; from++) {
+                    for (let to = 0; to < 3; to++) {
+                        if (from !== to && this.canMove(from, to)) {
+                            return { from, to };
+                        }
+                    }
+                }
+                return null;
+            }
+
+            checkWin() {
+                return this.towers[2].length === this.config.custom.numDisks;
+            }
+
+            gameOver(success) {
+                clearInterval(this.timerInterval);
+                
+                const optimal = Math.pow(2, this.config.custom.numDisks) - 1;
+                const efficiency = Math.min(1, optimal / this.state.moves);
+                const timeBonus = this.config.timeLimit ? 
+                    Math.max(0, this.config.timeLimit - this.state.timeElapsed) * 10 : 0;
+                
+                this.state.score = Math.max(0, Math.floor(
+                    (efficiency * 1000) + timeBonus - 
+                    (this.state.mistakes * 50) - 
+                    (this.state.hintsUsed * 100)
+                ));
+
+                const result = this.end(success);
+                this.showResultModal(result);
+            }
+
+            showResultModal(result) {
+                const optimal = Math.pow(2, this.config.custom.numDisks) - 1;
+                
+                document.getElementById('modalTitle').textContent = 
+                    result.success ? '🎉 Victory!' : '⏰ Time Up!';
+                document.getElementById('modalRating').textContent = 
+                    { 'S': '🏆', 'A': '⭐', 'B': '👍', 'C': '👌', 'D': '💪', 'F': '📚' }[result.rating];
+                document.getElementById('modalMoves').textContent = 
+                    `Moves: ${this.state.moves} / ${optimal} (${result.rating})`;
+                document.getElementById('modalTime').textContent = 
+                    `⏱️ ${this.formatTime(this.state.timeElapsed)}`;
+                document.getElementById('modalScore').textContent = 
+                    `⭐ Score: ${this.state.score}`;
+                document.getElementById('modalMessage').textContent = 
+                    this.state.moves === optimal && this.state.mistakes === 0 ? '🏆 PERFECT!' : 
+                    result.success ? 'Great job!' : 'Try again!';
+                
+                document.getElementById('winModal').classList.add('show');
+            }
+
+            closeModal() {
+                document.getElementById('winModal').classList.remove('show');
+                this.restart();
+            }
+
+            restart() {
+                clearInterval(this.timerInterval);
+                this.initGame();
+            }
+
+            updateStats() {
+                document.getElementById('moves').textContent = this.state.moves;
+                document.getElementById('score').textContent = this.state.score;
+            }
+
+            getOptimalScore() {
+                return Math.pow(2, this.config.custom.numDisks) - 1 * 100;
+            }
+
+            isOptimalSolution() {
+                const optimal = Math.pow(2, this.config.custom.numDisks) - 1;
+                return this.state.moves === optimal && this.state.mistakes === 0;
+            }
+
+            checkAchievements() {
+                const achievements = [];
+                if (this.isOptimalSolution()) achievements.push('perfect_solution');
+                if (this.state.hintsUsed === 0) achievements.push('no_hints');
+                if (this.state.mistakes === 0) achievements.push('flawless');
+                return achievements;
+            }
+
+            getGameSpecificData() {
+                return {
+                    numDisks: this.config.custom.numDisks,
+                    optimal: Math.pow(2, this.config.custom.numDisks) - 1,
+                    towers: this.towers
+                };
+            }
+        }
+
+        // Initialize game when page loads
+        let game;
+        try {
+            game = new HanoiGame();
+            console.log('✅ Game ready!');
+        } catch (error) {
+            console.error('❌ Error creating game:', error);
+            document.getElementById('app').innerHTML = `
+                <div class="error">
+                    <h2>❌ Game Error</h2>
+                    <p>${error.message}</p>
+                    <p><small>Check browser console</small></p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
