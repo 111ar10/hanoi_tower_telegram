@@ -27,150 +27,248 @@
             --disk-5: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
             --disk-6: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
             
-            --tower-pole-width: 8px;
-            --tower-base-height: 15px;
-            --disk-height: 28px;
-            --disk-spacing: 4px;
-            --tower-height: 350px;
+            /* Responsive tower dimensions */
+            --tower-pole-width: 6px;
+            --tower-base-height: 12px;
+            --disk-height: 24px;
+            --disk-spacing: 3px;
+            --tower-height: 280px;
             
-            /* Set to 'block' to show debug */
-            --debug-display: block;
+            --debug-display: none;
         }
-
+        
+        /* Responsive breakpoints */
+        @media (min-width: 768px) {
+            :root {
+                --tower-pole-width: 8px;
+                --tower-base-height: 15px;
+                --disk-height: 28px;
+                --disk-spacing: 4px;
+                --tower-height: 350px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            :root {
+                --tower-pole-width: 5px;
+                --tower-base-height: 10px;
+                --disk-height: 20px;
+                --disk-spacing: 2px;
+                --tower-height: 220px;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            :root {
+                --tower-pole-width: 4px;
+                --tower-base-height: 8px;
+                --disk-height: 18px;
+                --disk-spacing: 2px;
+                --tower-height: 200px;
+            }
+        }
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
-
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg-gradient);
             min-height: 100vh;
-            padding: 15px;
+            padding: 10px;
+            overflow-x: hidden;
         }
-
+        
+        @media (min-width: 768px) {
+            body {
+                padding: 15px;
+            }
+        }
+        
         .container {
             max-width: 600px;
             margin: 0 auto;
+            width: 100%;
         }
-
+        
         .game-header {
             background: var(--card-bg);
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 20px;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
-
+        
+        @media (min-width: 768px) {
+            .game-header {
+                border-radius: 20px;
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+        }
+        
         .game-title {
             text-align: center;
-            font-size: 28px;
+            font-size: clamp(22px, 6vw, 28px);
             font-weight: 800;
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
-
+        
         .difficulty-badge {
             display: block;
             text-align: center;
-            padding: 8px 20px;
-            border-radius: 25px;
-            font-size: 14px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: clamp(12px, 3vw, 14px);
             font-weight: bold;
             color: white;
-            margin: 0 auto 15px;
+            margin: 0 auto 12px;
             width: fit-content;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
-
+        
+        @media (min-width: 768px) {
+            .difficulty-badge {
+                padding: 8px 20px;
+                border-radius: 25px;
+                margin-bottom: 15px;
+            }
+        }
+        
         .diff-1 { background: linear-gradient(135deg, #48bb78, #38a169); }
         .diff-2 { background: linear-gradient(135deg, #ed8936, #dd6b20); }
         .diff-3 { background: linear-gradient(135deg, #f56565, #e53e3e); }
         .diff-4 { background: linear-gradient(135deg, #9f7aea, #805ad5); }
-
+        
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin-bottom: 15px;
+            gap: 8px;
+            margin-bottom: 12px;
         }
-
+        
+        @media (min-width: 768px) {
+            .stats-grid {
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+        }
+        
         .stat-box {
             background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
-            padding: 12px 8px;
-            border-radius: 12px;
+            padding: 10px 6px;
+            border-radius: 10px;
             text-align: center;
             border: 2px solid rgba(102, 126, 234, 0.2);
         }
-
+        
+        @media (min-width: 768px) {
+            .stat-box {
+                padding: 12px 8px;
+                border-radius: 12px;
+            }
+        }
+        
         .stat-label {
-            font-size: 11px;
+            font-size: clamp(9px, 2.5vw, 11px);
             color: #666;
             display: block;
             margin-bottom: 4px;
             font-weight: 600;
             text-transform: uppercase;
         }
-
+        
         .stat-value {
-            font-size: 20px;
+            font-size: clamp(16px, 5vw, 20px);
             font-weight: 800;
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-
+        
         .timer {
-            font-size: 28px;
+            font-size: clamp(20px, 6vw, 28px);
             font-weight: 800;
             text-align: center;
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            padding: 10px;
-            margin-bottom: 15px;
+            padding: 8px;
+            margin-bottom: 12px;
         }
-
+        
+        @media (min-width: 768px) {
+            .timer {
+                padding: 10px;
+                margin-bottom: 15px;
+            }
+        }
+        
         .timer.warning {
             background: linear-gradient(135deg, #f56565, #e53e3e);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             animation: pulse 1s infinite;
         }
-
+        
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.7; }
         }
-
+        
         .game-container {
             background: var(--card-bg);
-            border-radius: 20px;
-            padding: 25px 20px;
+            border-radius: 15px;
+            padding: 15px 10px;
             box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
         }
-
+        
+        @media (min-width: 768px) {
+            .game-container {
+                border-radius: 20px;
+                padding: 25px 20px;
+            }
+        }
+        
         .towers-container {
             background: linear-gradient(180deg, rgba(102, 126, 234, 0.05) 0%, transparent 100%);
-            border-radius: 15px;
-            padding: 20px 10px;
-            margin-bottom: 20px;
-            min-height: calc(var(--tower-height) + 40px);
+            border-radius: 12px;
+            padding: 15px 5px;
+            margin-bottom: 15px;
+            min-height: calc(var(--tower-height) + 30px);
         }
-
+        
+        @media (min-width: 768px) {
+            .towers-container {
+                border-radius: 15px;
+                padding: 20px 10px;
+                margin-bottom: 20px;
+                min-height: calc(var(--tower-height) + 40px);
+            }
+        }
+        
         .towers {
             display: flex;
             justify-content: space-around;
             align-items: flex-end;
             height: var(--tower-height);
             position: relative;
-            padding: 0 5px;
+            padding: 0 2px;
         }
-
+        
+        @media (min-width: 768px) {
+            .towers {
+                padding: 0 5px;
+            }
+        }
+        
         .tower {
             display: flex;
             flex-direction: column-reverse;
@@ -180,12 +278,13 @@
             position: relative;
             cursor: pointer;
             transition: transform 0.2s;
+            touch-action: manipulation;
         }
-
+        
         .tower:active {
             transform: scale(0.98);
         }
-
+        
         .tower-pole {
             width: var(--tower-pole-width);
             height: calc(100% - var(--tower-base-height));
@@ -194,37 +293,60 @@
             bottom: var(--tower-base-height);
             left: 50%;
             transform: translateX(-50%);
-            border-radius: 4px;
+            border-radius: 3px;
             box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
             z-index: 1;
         }
-
+        
+        @media (min-width: 768px) {
+            .tower-pole {
+                border-radius: 4px;
+            }
+        }
+        
         .tower-base {
             width: 100%;
             height: var(--tower-base-height);
             background: linear-gradient(180deg, #4a5568, #2d3748);
-            border-radius: 6px;
+            border-radius: 4px;
             position: absolute;
             bottom: 0;
             left: 0;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
             z-index: 1;
         }
-
+        
+        @media (min-width: 768px) {
+            .tower-base {
+                border-radius: 6px;
+            }
+        }
+        
         .disk {
             height: var(--disk-height);
-            border-radius: 12px;
+            border-radius: 10px;
             margin-bottom: var(--disk-spacing);
             position: relative;
             z-index: 10;
             transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
             box-shadow: 
-                0 4px 8px rgba(0, 0, 0, 0.3),
+                0 3px 6px rgba(0, 0, 0, 0.3),
                 inset 0 2px 4px rgba(255, 255, 255, 0.3);
-            border: 3px solid rgba(255, 255, 255, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.4);
             cursor: grab;
+            touch-action: none;
         }
-
+        
+        @media (min-width: 768px) {
+            .disk {
+                border-radius: 12px;
+                box-shadow: 
+                    0 4px 8px rgba(0, 0, 0, 0.3),
+                    inset 0 2px 4px rgba(255, 255, 255, 0.3);
+                border: 3px solid rgba(255, 255, 255, 0.4);
+            }
+        }
+        
         .disk::before {
             content: '';
             position: absolute;
@@ -233,68 +355,154 @@
             right: 50%;
             height: 30%;
             background: linear-gradient(90deg, rgba(255, 255, 255, 0.4), transparent);
-            border-radius: 12px 0 0 12px;
+            border-radius: 10px 0 0 10px;
         }
-
+        
+        @media (min-width: 768px) {
+            .disk::before {
+                border-radius: 12px 0 0 12px;
+            }
+        }
+        
         .disk:active { cursor: grabbing; }
-
-        .disk-1 { width: 35%; min-width: 70px; background: var(--disk-1); }
-        .disk-2 { width: 50%; min-width: 90px; background: var(--disk-2); }
-        .disk-3 { width: 65%; min-width: 110px; background: var(--disk-3); }
-        .disk-4 { width: 80%; min-width: 130px; background: var(--disk-4); }
-        .disk-5 { width: 92%; min-width: 150px; background: var(--disk-5); }
-        .disk-6 { width: 98%; min-width: 170px; background: var(--disk-6); }
-
+        
+        /* Responsive disk widths */
+        .disk-1 { 
+            width: 40%; 
+            min-width: 50px;
+            max-width: 70px;
+            background: var(--disk-1); 
+        }
+        
+        .disk-2 { 
+            width: 55%; 
+            min-width: 70px;
+            max-width: 90px;
+            background: var(--disk-2); 
+        }
+        
+        .disk-3 { 
+            width: 70%; 
+            min-width: 90px;
+            max-width: 110px;
+            background: var(--disk-3); 
+        }
+        
+        .disk-4 { 
+            width: 85%; 
+            min-width: 110px;
+            max-width: 130px;
+            background: var(--disk-4); 
+        }
+        
+        .disk-5 { 
+            width: 95%; 
+            min-width: 130px;
+            max-width: 150px;
+            background: var(--disk-5); 
+        }
+        
+        .disk-6 { 
+            width: 98%; 
+            min-width: 150px;
+            max-width: 170px;
+            background: var(--disk-6); 
+        }
+        
+        @media (min-width: 768px) {
+            .disk-1 { width: 35%; min-width: 70px; }
+            .disk-2 { width: 50%; min-width: 90px; }
+            .disk-3 { width: 65%; min-width: 110px; }
+            .disk-4 { width: 80%; min-width: 130px; }
+            .disk-5 { width: 92%; min-width: 150px; }
+            .disk-6 { width: 98%; min-width: 170px; }
+        }
+        
         .selected {
-            transform: translateY(-25px) scale(1.1);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(102, 126, 234, 0.6);
+            transform: translateY(-20px) scale(1.1);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.4), 0 0 15px rgba(102, 126, 234, 0.6);
             filter: brightness(1.2);
             z-index: 100 !important;
         }
-
+        
+        @media (min-width: 768px) {
+            .selected {
+                transform: translateY(-25px) scale(1.1);
+                box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(102, 126, 234, 0.6);
+            }
+        }
+        
         .highlight {
             background: rgba(72, 187, 120, 0.3);
             animation: glow 1s infinite;
         }
-
+        
         @keyframes glow {
             0%, 100% { box-shadow: 0 0 10px rgba(72, 187, 120, 0.5); }
             50% { box-shadow: 0 0 25px rgba(72, 187, 120, 0.8); }
         }
-
+        
         .invalid { animation: shake 0.4s; }
-
+        
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
-            20%, 40%, 60%, 80% { transform: translateX(8px); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+            20%, 40%, 60%, 80% { transform: translateX(6px); }
         }
-
+        
+        @media (min-width: 768px) {
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+                20%, 40%, 60%, 80% { transform: translateX(8px); }
+            }
+        }
+        
         .controls {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            gap: 10px;
         }
-
+        
+        @media (min-width: 768px) {
+            .controls {
+                gap: 12px;
+            }
+        }
+        
         button {
-            padding: 14px 20px;
+            padding: 12px 16px;
             border: none;
-            border-radius: 12px;
-            font-size: 15px;
+            border-radius: 10px;
+            font-size: clamp(13px, 3.5vw, 15px);
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s;
             color: white;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            touch-action: manipulation;
         }
-
-        button:active { transform: scale(0.95); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-
+        
+        @media (min-width: 768px) {
+            button {
+                padding: 14px 20px;
+                border-radius: 12px;
+            }
+        }
+        
+        button:active { 
+            transform: scale(0.95); 
+        }
+        
+        button:disabled { 
+            opacity: 0.5; 
+            cursor: not-allowed; 
+        }
+        
         .btn-primary { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); }
         .btn-secondary { background: linear-gradient(135deg, var(--warning-color), #dd6b20); }
         .btn-success { background: linear-gradient(135deg, var(--success-color), #38a169); }
-
+        
         .modal {
             display: none;
             position: fixed;
@@ -306,60 +514,78 @@
             align-items: center;
             justify-content: center;
             z-index: 1000;
+            padding: 20px;
         }
-
+        
         .modal.show { display: flex; }
-
+        
         .modal-content {
             background: white;
-            padding: 40px 30px;
-            border-radius: 25px;
+            padding: 30px 20px;
+            border-radius: 20px;
             text-align: center;
             max-width: 350px;
-            width: 90%;
+            width: 100%;
             animation: slideUp 0.5s;
+            max-height: 90vh;
+            overflow-y: auto;
         }
-
+        
+        @media (min-width: 768px) {
+            .modal-content {
+                padding: 40px 30px;
+                border-radius: 25px;
+            }
+        }
+        
         @keyframes slideUp {
             from { transform: translateY(100px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
-
+        
         .modal h2 {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 20px;
-            font-size: 32px;
+            font-size: clamp(24px, 7vw, 32px);
         }
-
+        
         .modal p {
             color: #4a5568;
             margin-bottom: 12px;
-            font-size: 16px;
+            font-size: clamp(14px, 4vw, 16px);
         }
-
+        
         .rating {
-            font-size: 80px;
+            font-size: clamp(60px, 15vw, 80px);
             margin: 20px 0;
         }
-
+        
         .debug-info {
             display: var(--debug-display);
             background: rgba(0, 0, 0, 0.8);
             color: #68d391;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 11px;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: clamp(9px, 2.5vw, 11px);
             margin-top: 12px;
             font-family: monospace;
             line-height: 1.6;
+            overflow-x: auto;
         }
-
+        
+        @media (min-width: 768px) {
+            .debug-info {
+                padding: 12px;
+                border-radius: 10px;
+            }
+        }
+        
         .debug-info strong {
             color: #63b3ed;
         }
-
+        
         .error {
             background: #fee;
             color: #c00;
@@ -367,6 +593,56 @@
             border-radius: 15px;
             margin: 20px;
             text-align: center;
+            font-size: clamp(14px, 4vw, 16px);
+        }
+        
+        /* Landscape orientation fixes for mobile */
+        @media (max-height: 600px) and (orientation: landscape) {
+            :root {
+                --tower-height: 180px;
+                --disk-height: 16px;
+            }
+            
+            body {
+                padding: 5px;
+            }
+            
+            .game-header {
+                padding: 10px;
+                margin-bottom: 10px;
+            }
+            
+            .stats-grid {
+                gap: 5px;
+                margin-bottom: 8px;
+            }
+            
+            .stat-box {
+                padding: 6px 4px;
+            }
+            
+            .timer {
+                padding: 5px;
+                margin-bottom: 8px;
+            }
+            
+            .game-container {
+                padding: 10px 8px;
+            }
+            
+            .towers-container {
+                padding: 10px 5px;
+                margin-bottom: 10px;
+            }
+        }
+        
+        /* Safe area for notched devices */
+        @supports (padding: max(0px)) {
+            body {
+                padding-left: max(10px, env(safe-area-inset-left));
+                padding-right: max(10px, env(safe-area-inset-right));
+                padding-bottom: max(10px, env(safe-area-inset-bottom));
+            }
         }
     </style>
 </head>
