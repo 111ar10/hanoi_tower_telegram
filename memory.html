@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Memory Match</title>
+    
+    <script src="telegram-web-app-mock.js"></script>
+    <script src="game-interface.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #48bb78;
+            --warning-color: #ed8936;
+            --danger-color: #f56565;
+            
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            
+            /* 🎴 CARD BACK DESIGN */
+            --card-back: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            
+            /* Card Settings */
+            --card-size: 80px;
+            --card-gap: 10px;
+            --flip-speed: 0.6s;
+            --card-radius: 12px;
+            
+            --debug-display: block;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            padding: 15px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .game-header {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-title {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+        }
+
+        .difficulty-badge {
+            display: block;
+            text-align: center;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            margin: 0 auto 15px;
+            width: fit-content;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .diff-1 { background: linear-gradient(135deg, #48bb78, #38a169); }
+        .diff-2 { background: linear-gradient(135deg, #ed8936, #dd6b20); }
+        .diff-3 { background: linear-gradient(135deg, #f56565, #e53e3e); }
+        .diff-4 { background: linear-gradient(135deg, #9f7aea, #805ad5); }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
+            padding: 12px 8px;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #666;
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .timer {
+            font-size: 28px;
+            font-weight: 800;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        .timer.warning {
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .combo-display {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #f56565;
+            margin-bottom: 10px;
+            min-height: 25px;
+            animation: bounce 0.5s;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .game-container {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .cards-grid {
+            display: grid;
+            gap: var(--card-gap);
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .cards-grid.pairs-4 { grid-template-columns: repeat(4, var(--card-size)); }
+        .cards-grid.pairs-6 { grid-template-columns: repeat(4, var(--card-size)); }
+        .cards-grid.pairs-8 { grid-template-columns: repeat(4, var(--card-size)); }
+        .cards-grid.pairs-10 { grid-template-columns: repeat(5, var(--card-size)); }
+
+        .card {
+            width: var(--card-size);
+            height: var(--card-size);
+            position: relative;
+            cursor: pointer;
+            perspective: 1000px;
+        }
+
+        .card-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform var(--flip-speed);
+        }
+
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card.matched .card-inner {
+            transform: rotateY(180deg);
+            opacity: 0.6;
+        }
+
+        .card-front,
+        .card-back {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            backface-visibility: hidden;
+            border-radius: var(--card-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-front {
+            background: var(--card-back);
+            background-size: cover;
+            background-position: center;
+        }
+
+        .card-front::before {
+            content: '?';
+            font-size: 48px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-back {
+            background: white;
+            transform: rotateY(180deg);
+            font-size: 48px;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .card-back.image-mode {
+            background-size: cover;
+            background-position: center;
+        }
+
+        .card:not(.flipped):not(.matched):hover .card-inner {
+            transform: scale(1.05);
+        }
+
+        .card:not(.flipped):not(.matched):active .card-inner {
+            transform: scale(0.95);
+        }
+
+        .card.wrong {
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        .card.match {
+            animation: matchPulse 0.6s;
+        }
+
+        @keyframes matchPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        button {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active { transform: scale(0.95); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-primary { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); }
+        .btn-success { background: linear-gradient(135deg, var(--success-color), #38a169); }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.show { display: flex; }
+
+        .modal-content {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 25px;
+            text-align: center;
+            max-width: 350px;
+            width: 90%;
+            animation: slideUp 0.5s;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal h2 {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            font-size: 32px;
+        }
+
+        .modal p {
+            color: #4a5568;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .rating {
+            font-size: 80px;
+            margin: 20px 0;
+        }
+
+        .debug-info {
+            display: var(--debug-display);
+            background: rgba(0, 0, 0, 0.8);
+            color: #68d391;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 11px;
+            margin-top: 12px;
+            font-family: monospace;
+            line-height: 1.6;
+        }
+
+        .debug-info strong {
+            color: #63b3ed;
+        }
+
+        .error {
+            background: #fee;
+            color: #c00;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="app">
+        <div class="game-header">
+            <div class="game-title">🎴 Memory Match</div>
+            <div class="difficulty-badge" id="difficultyBadge">Loading...</div>
+            
+            <div class="timer" id="timer">Ready</div>
+            
+            <div class="combo-display" id="comboDisplay"></div>
+            
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span class="stat-label">Moves</span>
+                    <span class="stat-value" id="moves">0</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Pairs</span>
+                    <span class="stat-value" id="pairs">0/0</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Accuracy</span>
+                    <span class="stat-value" id="accuracy">100%</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Score</span>
+                    <span class="stat-value" id="score">0</span>
+                </div>
+            </div>
+
+            <div class="debug-info" id="debugInfo">Loading...</div>
+        </div>
+
+        <div class="game-container">
+            <div class="cards-grid" id="cardsGrid"></div>
+
+            <div class="controls">
+                <button class="btn-primary" id="restartBtn">🔄 New Game</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="winModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">🎉 Perfect!</h2>
+            <div class="rating" id="modalRating">⭐</div>
+            <p id="modalMoves"></p>
+            <p id="modalAccuracy"></p>
+            <p id="modalTime"></p>
+            <p id="modalScore"></p>
+            <p id="modalMessage"></p>
+            <button class="btn-success" id="playAgainBtn">🎮 Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        console.log('🎴 Memory Match Starting...');
+
+        if (!window.Telegram || !window.TelegramMiniGame) {
+            document.getElementById('app').innerHTML = `<div class="error"><h2>❌ Error</h2></div>`;
+            throw new Error('Missing dependencies');
+        }
+
+        class MemoryMatch extends TelegramMiniGame {
+            constructor() {
+                super({
+                    gameId: 'memory',
+                    gameName: 'Memory Match',
+                    custom: { numPairs: 4, cardTheme: 'emoji' }
+                });
+
+                this.cards = [];
+                this.flippedCards = [];
+                this.matchedPairs = 0;
+                this.totalPairs = 4;
+                this.isProcessing = false;
+                this.timerInterval = null;
+                this.combo = 0;
+                this.cardElements = [];
+                this.checkMatchTimer = null;
+                
+                // 🎨 Configure emojis here
+                this.emojiSets = {
+                    animals: ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯'],
+                    fruits: ['🍎', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🍒', '🍑', '🍍'],
+                    nature: ['🌸', '🌺', '🌻', '🌷', '🌹', '🌼', '🌿', '🍀', '🌾', '🌵'],
+                    space: ['🌍', '🌙', '⭐', '☀️', '🪐', '🌟', '💫', '✨', '☄️', '🌈'],
+                    food: ['🍕', '🍔', '🌮', '🍟', '🍿', '🎂', '🍪', '🍩', '🧁', '🍦'],
+                    numbers: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+                };
+                
+                this.currentEmojiSet = this.emojiSets.numbers; // Change theme here
+                this.useImages = false; // Set to true for images
+                
+                this.showDebugInfo();
+                this.setupDifficulty();
+                this.initGame();
+                this.setupEventHandlers();
+                
+                console.log('✅ MemoryMatch created!');
+            }
+
+            setupEventHandlers() {
+                document.getElementById('restartBtn').addEventListener('click', () => this.restart());
+                document.getElementById('playAgainBtn').addEventListener('click', () => this.closeModal());
+            }
+
+            showDebugInfo() {
+                document.getElementById('debugInfo').innerHTML = `
+                    <strong>⚙️ Config:</strong> Difficulty: ${this.config.difficulty} | 
+                    Pairs: ${this.config.custom.numPairs} | Time: ${this.config.timeLimit || '∞'}s | 
+                    Session: ${this.config.sessionId}
+                `;
+            }
+
+            setupDifficulty() {
+                const pairsMap = { 1: 4, 2: 6, 3: 8, 4: 10 };
+                this.totalPairs = pairsMap[this.config.difficulty] || 4;
+                this.config.custom.numPairs = this.totalPairs;
+                
+                const diffNames = ['Easy', 'Medium', 'Hard', 'Expert'];
+                const badge = document.getElementById('difficultyBadge');
+                badge.textContent = `${diffNames[this.config.difficulty - 1]} (${this.totalPairs} pairs)`;
+                badge.className = `difficulty-badge diff-${this.config.difficulty}`;
+            }
+
+            initGame() {
+                this.state.moves = 0;
+                this.state.score = 0;
+                this.matchedPairs = 0;
+                this.flippedCards = [];
+                this.combo = 0;
+                this.isProcessing = false;
+                
+                if (this.checkMatchTimer) {
+                    clearTimeout(this.checkMatchTimer);
+                    this.checkMatchTimer = null;
+                }
+                
+                this.createCards();
+                this.renderCards();
+                this.updateStats();
+                this.start();
+                this.startTimer();
+            }
+
+            createCards() {
+                const cardContent = [];
+                for (let i = 0; i < this.totalPairs; i++) {
+                    const content = this.currentEmojiSet[i];
+                    cardContent.push(content, content);
+                }
+                
+                this.cards = this.shuffle(cardContent.map((content, index) => ({
+                    id: index,
+                    content: content,
+                    isFlipped: false,
+                    isMatched: false
+                })));
+            }
+
+            shuffle(array) {
+                const arr = [...array];
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                }
+                return arr;
+            }
+
+            renderCards() {
+                const grid = document.getElementById('cardsGrid');
+                grid.className = `cards-grid pairs-${this.totalPairs}`;
+                grid.innerHTML = '';
+                this.cardElements = [];
+                
+                this.cards.forEach((card, index) => {
+                    const cardEl = document.createElement('div');
+                    cardEl.className = 'card';
+                    cardEl.innerHTML = `
+                        <div class="card-inner">
+                            <div class="card-front"></div>
+                            <div class="card-back">${card.content}</div>
+                        </div>
+                    `;
+                    
+                    cardEl.addEventListener('click', () => this.handleCardClick(index));
+                    grid.appendChild(cardEl);
+                    this.cardElements[index] = cardEl;
+                });
+            }
+
+            handleCardClick(index) {
+                if (this.state.status !== 'playing' || this.isProcessing) return;
+                
+                const card = this.cards[index];
+                if (card.isFlipped || card.isMatched) return;
+                
+                // Flip card
+                card.isFlipped = true;
+                this.cardElements[index].classList.add('flipped');
+                this.flippedCards.push(index);
+                
+                if (this.config.hapticsEnabled) {
+                    this.tg.HapticFeedback.selectionChanged();
+                }
+                
+                console.log(`🎴 Card ${index} flipped. Total: ${this.flippedCards.length}`);
+                
+                // Check if two cards flipped
+                if (this.flippedCards.length === 2) {
+                    this.isProcessing = true;
+                    this.state.moves++;
+                    this.updateStats();
+                    
+                    console.log('⏳ Scheduling match check...');
+                    
+                    // Use immediate check after delay
+                    this.checkMatchTimer = setTimeout(() => {
+                        console.log('⏰ Timer fired - checking match');
+                        this.checkMatch();
+                    }, 1000);
+                }
+            }
+
+            checkMatch() {
+                console.log('🔍 checkMatch() executing');
+                
+                const [idx1, idx2] = this.flippedCards;
+                const card1 = this.cards[idx1];
+                const card2 = this.cards[idx2];
+                
+                console.log(`Comparing: "${card1.content}" vs "${card2.content}"`);
+                
+                if (card1.content === card2.content) {
+                    // MATCH!
+                    console.log('✅ MATCH!');
+                    
+                    card1.isMatched = true;
+                    card2.isMatched = true;
+                    this.matchedPairs++;
+                    this.combo++;
+                    
+                    this.cardElements[idx1].classList.add('matched', 'match');
+                    this.cardElements[idx2].classList.add('matched', 'match');
+                    
+                    const comboBonus = this.combo > 1 ? this.combo * 50 : 0;
+                    this.state.score += 100 + comboBonus;
+                    
+                    if (this.combo > 1) {
+                        document.getElementById('comboDisplay').textContent = `🔥 ${this.combo}x COMBO! +${comboBonus}`;
+                        setTimeout(() => document.getElementById('comboDisplay').textContent = '', 2000);
+                    }
+                    
+                    if (this.config.hapticsEnabled) {
+                        this.tg.HapticFeedback.notificationOccurred('success');
+                    }
+                    
+                    this.flippedCards = [];
+                    this.isProcessing = false;
+                    this.updateStats();
+                    
+                    if (this.matchedPairs === this.totalPairs) {
+                        setTimeout(() => this.gameOver(true), 500);
+                    }
+                } else {
+                    // NO MATCH
+                    console.log('❌ NO MATCH - flipping back');
+                    
+                    this.combo = 0;
+                    this.cardElements[idx1].classList.add('wrong');
+                    this.cardElements[idx2].classList.add('wrong');
+                    
+                    if (this.config.hapticsEnabled) {
+                        this.tg.HapticFeedback.notificationOccurred('error');
+                    }
+                    
+                    setTimeout(() => {
+                        console.log('🔄 Flipping back');
+                        
+                        this.cardElements[idx1].classList.remove('wrong', 'flipped');
+                        this.cardElements[idx2].classList.remove('wrong', 'flipped');
+                        
+                        card1.isFlipped = false;
+                        card2.isFlipped = false;
+                        
+                        this.flippedCards = [];
+                        this.isProcessing = false;
+                        
+                        console.log('✅ Ready for next move');
+                    }, 800);
+                }
+            }
+
+            startTimer() {
+                clearInterval(this.timerInterval);
+                const timerEl = document.getElementById('timer');
+                
+                if (!this.config.timeLimit) {
+                    this.timerInterval = setInterval(() => {
+                        const elapsed = Math.floor((Date.now() - this.state.startTime) / 1000);
+                        const mins = Math.floor(elapsed / 60);
+                        const secs = elapsed % 60;
+                        timerEl.textContent = `⏱️ ${mins}:${secs.toString().padStart(2, '0')}`;
+                    }, 1000);
+                    return;
+                }
+                
+                this.timerInterval = setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - this.state.startTime) / 1000);
+                    const remaining = this.config.timeLimit - elapsed;
+                    
+                    if (remaining <= 0) {
+                        clearInterval(this.timerInterval);
+                        timerEl.textContent = '⏰ 0:00';
+                        this.gameOver(false);
+                        return;
+                    }
+                    
+                    const mins = Math.floor(remaining / 60);
+                    const secs = remaining % 60;
+                    timerEl.textContent = `⏱️ ${mins}:${secs.toString().padStart(2, '0')}`;
+                    timerEl.classList.toggle('warning', remaining <= 30);
+                }, 1000);
+            }
+
+            gameOver(success) {
+                clearInterval(this.timerInterval);
+                
+                const accuracy = (this.matchedPairs / this.state.moves) * 100;
+                const timeBonus = this.config.timeLimit ? Math.max(0, this.config.timeLimit - this.state.timeElapsed) * 10 : 0;
+                this.state.score += Math.floor(timeBonus);
+                
+                const result = this.end(success);
+                setTimeout(() => this.showResultModal(result, accuracy), 300);
+            }
+
+            showResultModal(result, accuracy) {
+                document.getElementById('modalTitle').textContent = result.success ? '🎉 Perfect!' : '⏰ Time Up!';
+                document.getElementById('modalRating').textContent = { 'S': '🏆', 'A': '⭐', 'B': '👍', 'C': '👌', 'D': '💪', 'F': '📚' }[result.rating];
+                document.getElementById('modalMoves').textContent = `Moves: ${this.state.moves} (${result.rating})`;
+                document.getElementById('modalAccuracy').textContent = `Accuracy: ${accuracy.toFixed(1)}%`;
+                document.getElementById('modalTime').textContent = `⏱️ ${this.formatTime(this.state.timeElapsed)}`;
+                document.getElementById('modalScore').textContent = `⭐ Score: ${this.state.score}`;
+                document.getElementById('modalMessage').textContent = this.state.moves === this.totalPairs ? '🏆 PERFECT!' : result.success ? 'Great!' : 'Try again!';
+                
+                document.getElementById('winModal').classList.add('show');
+                
+                if (this.config.hapticsEnabled) {
+                    this.tg.HapticFeedback.notificationOccurred(result.success ? 'success' : 'error');
+                }
+            }
+
+            closeModal() {
+                document.getElementById('winModal').classList.remove('show');
+                this.restart();
+            }
+
+            restart() {
+                clearInterval(this.timerInterval);
+                if (this.checkMatchTimer) {
+                    clearTimeout(this.checkMatchTimer);
+                }
+                this.initGame();
+            }
+
+            updateStats() {
+                document.getElementById('moves').textContent = this.state.moves;
+                document.getElementById('pairs').textContent = `${this.matchedPairs}/${this.totalPairs}`;
+                const accuracy = this.state.moves > 0 ? ((this.matchedPairs / this.state.moves) * 100).toFixed(0) : 100;
+                document.getElementById('accuracy').textContent = `${accuracy}%`;
+                document.getElementById('score').textContent = this.state.score;
+            }
+
+            getOptimalScore() { return this.totalPairs * 100; }
+            isOptimalSolution() { return this.state.moves === this.totalPairs; }
+            checkAchievements() {
+                const achievements = [];
+                if (this.isOptimalSolution()) achievements.push('perfect_memory');
+                if (this.state.timeElapsed < 60) achievements.push('speed_master');
+                return achievements;
+            }
+            getGameSpecificData() {
+                return {
+                    numPairs: this.totalPairs,
+                    accuracy: (this.matchedPairs / this.state.moves) * 100
+                };
+            }
+        }
+
+        let game;
+        try {
+            game = new MemoryMatch();
+            console.log('✅ Memory Match ready!');
+        } catch (error) {
+            console.error('❌ Error:', error);
+            document.getElementById('app').innerHTML = `<div class="error"><h2>❌ Error</h2><p>${error.message}</p></div>`;
+        }
+    </script>
+</body>
+</html>
