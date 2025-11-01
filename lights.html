@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lights Out</title>
+    
+    <script src="telegram-web-app-mock.js"></script>
+    <script src="game-interface.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #48bb78;
+            --warning-color: #ed8936;
+            
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            
+            /* ========================================
+               💡 LIGHT ELEMENT STYLES - Customize appearance!
+               ======================================== */
+            
+            /* Gradient Style */
+            --light-on-bg: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            --light-off-bg: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            
+            /* Responsive Light appearance */
+            --light-size: 65px;
+            --light-gap: 8px;
+            --light-radius: 12px;
+            --light-border: 3px solid rgba(255, 255, 255, 0.3);
+            --light-shadow-on: 0 0 20px rgba(251, 191, 36, 0.6), 0 4px 12px rgba(0, 0, 0, 0.3);
+            --light-shadow-off: inset 0 4px 8px rgba(0, 0, 0, 0.3);
+            --light-icon-size: 36px;
+            
+            /* Animation */
+            --toggle-speed: 0.3s;
+        }
+
+        /* Responsive breakpoints */
+        @media (min-width: 375px) {
+            :root {
+                --light-size: 70px;
+                --light-icon-size: 40px;
+            }
+        }
+
+        @media (min-width: 414px) {
+            :root {
+                --light-size: 75px;
+                --light-gap: 10px;
+                --light-icon-size: 44px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            :root {
+                --light-size: 85px;
+                --light-gap: 12px;
+                --light-radius: 15px;
+                --light-icon-size: 50px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            :root {
+                --light-size: 55px;
+                --light-gap: 6px;
+                --light-radius: 10px;
+                --light-icon-size: 32px;
+                --light-border: 2px solid rgba(255, 255, 255, 0.3);
+            }
+        }
+
+        /* Landscape orientation */
+        @media (max-height: 600px) and (orientation: landscape) {
+            :root {
+                --light-size: 60px;
+                --light-gap: 6px;
+                --light-icon-size: 36px;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            padding: 10px;
+            overflow-x: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (min-width: 768px) {
+            body {
+                padding: 15px;
+            }
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .game-container {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (min-width: 768px) {
+            .game-container {
+                border-radius: 20px;
+                padding: 20px;
+            }
+        }
+
+        .lights-grid {
+            display: grid;
+            gap: var(--light-gap);
+            justify-content: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+        }
+
+        @media (min-width: 768px) {
+            .lights-grid {
+                padding: 20px;
+                border-radius: 15px;
+            }
+        }
+
+        .lights-grid.size-3 { grid-template-columns: repeat(3, var(--light-size)); }
+        .lights-grid.size-4 { grid-template-columns: repeat(4, var(--light-size)); }
+        .lights-grid.size-5 { grid-template-columns: repeat(5, var(--light-size)); }
+
+        .light {
+            width: var(--light-size);
+            height: var(--light-size);
+            border-radius: var(--light-radius);
+            border: var(--light-border);
+            cursor: pointer;
+            transition: all var(--toggle-speed) cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        .light.off {
+            background: var(--light-off-bg);
+            box-shadow: var(--light-shadow-off);
+        }
+
+        .light.on {
+            background: var(--light-on-bg);
+            box-shadow: var(--light-shadow-on);
+        }
+
+        .light-icon {
+            font-size: var(--light-icon-size);
+            transition: all var(--toggle-speed);
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .light.off .light-icon {
+            opacity: 0.3;
+            filter: grayscale(100%);
+        }
+
+        .light.on .light-icon {
+            opacity: 1;
+            filter: grayscale(0%);
+            animation: glow 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+
+        .light:active {
+            transform: scale(0.9);
+        }
+
+        .light.toggling {
+            animation: toggle-flash 0.3s;
+        }
+
+        @keyframes toggle-flash {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); filter: brightness(1.5); }
+        }
+
+        .light:hover {
+            transform: scale(1.05);
+            filter: brightness(1.1);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal.show { display: flex; }
+
+        .modal-content {
+            background: white;
+            padding: 30px 20px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 350px;
+            width: 100%;
+            animation: slideUp 0.5s;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        @media (min-width: 768px) {
+            .modal-content {
+                padding: 40px 30px;
+                border-radius: 25px;
+            }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal h2 {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            font-size: clamp(24px, 7vw, 32px);
+        }
+
+        .modal p {
+            color: #4a5568;
+            margin-bottom: 12px;
+            font-size: clamp(14px, 4vw, 16px);
+        }
+
+        .rating {
+            font-size: clamp(60px, 15vw, 80px);
+            margin: 20px 0;
+        }
+
+        button {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 10px;
+            font-size: clamp(13px, 3.5vw, 15px);
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            touch-action: manipulation;
+        }
+
+        @media (min-width: 768px) {
+            button {
+                padding: 14px 20px;
+                border-radius: 12px;
+            }
+        }
+
+        button:active { transform: scale(0.95); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-success { background: linear-gradient(135deg, var(--success-color), #38a169); }
+
+        .error {
+            background: #fee;
+            color: #c00;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px;
+            text-align: center;
+            font-size: clamp(14px, 4vw, 16px);
+        }
+
+        /* Safe area for notched devices */
+        @supports (padding: max(0px)) {
+            body {
+                padding-left: max(10px, env(safe-area-inset-left));
+                padding-right: max(10px, env(safe-area-inset-right));
+                padding-bottom: max(10px, env(safe-area-inset-bottom));
+            }
+        }
+
+        /* Smooth scrolling for modal */
+        .modal-content {
+            -webkit-overflow-scrolling: touch;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="app">
+        <div class="game-container">
+            <div class="lights-grid" id="lightsGrid"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="winModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">🎉 All Lights Out!</h2>
+            <div class="rating" id="modalRating">⭐</div>
+            <p id="modalTime"></p>
+            <p id="modalMessage"></p>
+            <button class="btn-success" id="playAgainBtn">🎮 Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        console.log('💡 Lights Out Starting...');
+
+        if (!window.Telegram || !window.TelegramMiniGame) {
+            document.getElementById('app').innerHTML = `<div class="error"><h2>❌ Error Loading Game</h2></div>`;
+            throw new Error('Missing dependencies');
+        }
+
+        class LightsOut extends TelegramMiniGame {
+            constructor() {
+                console.log('🏗️ Creating LightsOut...');
+                
+                super({
+                    gameId: 'lights',
+                    gameName: 'Lights Out',
+                    custom: { gridSize: 3, theme: 'lightbulb' }
+                });
+
+                this.grid = [];
+                this.gridSize = 3;
+                this.lightElements = [];
+                this.timerInterval = null;
+                this.isSolving = false;
+                
+                /* 🎨 THEME CONFIGURATION */
+                this.themes = {
+                    lightbulb: { onIcon: '💡', offIcon: '💡' },
+                    stars: { onIcon: '⭐', offIcon: '⚫' },
+                    boxes: { onIcon: '🟨', offIcon: '⬛' },
+                    fireice: { onIcon: '🔥', offIcon: '❄️' },
+                    nature: { onIcon: '🌻', offIcon: '🌑' },
+                    tech: { onIcon: '🟢', offIcon: '🔴' },
+                    animals: { onIcon: '🐝', offIcon: '🦇' },
+                    weather: { onIcon: '☀️', offIcon: '🌙' }
+                };
+                
+                this.currentTheme = this.themes.lightbulb;
+                
+                this.setupDifficulty();
+                this.initGame();
+                this.setupEventHandlers();
+                
+                console.log('✅ LightsOut created!');
+            }
+
+            setupEventHandlers() {
+                document.getElementById('playAgainBtn').addEventListener('click', () => this.closeModal());
+                console.log('✅ Event handlers attached');
+            }
+
+            setupDifficulty() {
+                const sizeMap = { 1: 3, 2: 4, 3: 5, 4: 5 };
+                this.gridSize = sizeMap[this.config.difficulty] || 3;
+                this.config.custom.gridSize = this.gridSize;
+                
+                console.log(`🎯 Difficulty: ${this.config.difficulty}, Grid: ${this.gridSize}x${this.gridSize}`);
+            }
+
+            initGame() {
+                console.log('🎮 Initializing game...');
+                
+                this.state.moves = 0;
+                this.state.score = 0;
+                this.isSolving = false;
+                
+                this.createGrid();
+                this.scramble();
+                this.renderGrid();
+                this.start();
+                this.startTimer();
+                
+                console.log('✅ Game initialized!');
+            }
+
+            createGrid() {
+                this.grid = [];
+                for (let row = 0; row < this.gridSize; row++) {
+                    this.grid[row] = [];
+                    for (let col = 0; col < this.gridSize; col++) {
+                        this.grid[row][col] = false;
+                    }
+                }
+            }
+
+            scramble() {
+                const moves = Math.max(5, this.gridSize * 2);
+                for (let i = 0; i < moves; i++) {
+                    const row = Math.floor(Math.random() * this.gridSize);
+                    const col = Math.floor(Math.random() * this.gridSize);
+                    this.toggleLightLogic(row, col);
+                }
+                console.log('🔀 Grid scrambled, lights on:', this.countLightsOn());
+            }
+
+            renderGrid() {
+                const gridEl = document.getElementById('lightsGrid');
+                gridEl.className = `lights-grid size-${this.gridSize}`;
+                gridEl.innerHTML = '';
+                this.lightElements = [];
+                
+                for (let row = 0; row < this.gridSize; row++) {
+                    this.lightElements[row] = [];
+                    for (let col = 0; col < this.gridSize; col++) {
+                        const light = document.createElement('div');
+                        light.className = 'light';
+                        light.dataset.row = row;
+                        light.dataset.col = col;
+                        
+                        const icon = document.createElement('div');
+                        icon.className = 'light-icon';
+                        light.appendChild(icon);
+                        
+                        light.addEventListener('click', () => this.handleLightClick(row, col));
+                        
+                        gridEl.appendChild(light);
+                        this.lightElements[row][col] = light;
+                        this.updateLightDisplay(row, col);
+                    }
+                }
+            }
+
+            updateLightDisplay(row, col) {
+                const light = this.lightElements[row][col];
+                const isOn = this.grid[row][col];
+                const icon = light.querySelector('.light-icon');
+                
+                light.classList.remove('on', 'off');
+                light.classList.add(isOn ? 'on' : 'off');
+                icon.textContent = isOn ? this.currentTheme.onIcon : this.currentTheme.offIcon;
+            }
+
+            handleLightClick(row, col) {
+                if (this.state.status !== 'playing' || this.isSolving) return;
+                
+                this.toggleLight(row, col);
+                this.state.moves++;
+                
+                if (this.config.hapticsEnabled) {
+                    this.tg.HapticFeedback.impactOccurred('light');
+                }
+                
+                if (this.checkWin()) {
+                    setTimeout(() => this.gameOver(true), 300);
+                }
+            }
+
+            toggleLight(row, col) {
+                this.toggleLightLogic(row, col);
+                this.animateToggle(row, col);
+                
+                const neighbors = [
+                    [row - 1, col], [row + 1, col],
+                    [row, col - 1], [row, col + 1]
+                ];
+                
+                neighbors.forEach(([r, c]) => {
+                    if (r >= 0 && r < this.gridSize && c >= 0 && c < this.gridSize) {
+                        this.animateToggle(r, c);
+                    }
+                });
+            }
+
+            toggleLightLogic(row, col) {
+                this.grid[row][col] = !this.grid[row][col];
+                
+                const neighbors = [
+                    [row - 1, col], [row + 1, col],
+                    [row, col - 1], [row, col + 1]
+                ];
+                
+                neighbors.forEach(([r, c]) => {
+                    if (r >= 0 && r < this.gridSize && c >= 0 && c < this.gridSize) {
+                        this.grid[r][c] = !this.grid[r][c];
+                    }
+                });
+            }
+
+            animateToggle(row, col) {
+                const light = this.lightElements[row][col];
+                light.classList.add('toggling');
+                this.updateLightDisplay(row, col);
+                setTimeout(() => light.classList.remove('toggling'), 300);
+            }
+
+            checkWin() {
+                return this.grid.every(row => row.every(light => !light));
+            }
+
+            countLightsOn() {
+                let count = 0;
+                this.grid.forEach(row => row.forEach(light => { if (light) count++; }));
+                return count;
+            }
+
+            startTimer() {
+                clearInterval(this.timerInterval);
+                
+                if (!this.config.timeLimit) {
+                    this.timerInterval = setInterval(() => {
+                        const elapsed = Math.floor((Date.now() - this.state.startTime) / 1000);
+                    }, 1000);
+                    return;
+                }
+                
+                this.timerInterval = setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - this.state.startTime) / 1000);
+                    const remaining = this.config.timeLimit - elapsed;
+                    
+                    if (remaining <= 0) {
+                        clearInterval(this.timerInterval);
+                        this.gameOver(false);
+                        return;
+                    }
+                }, 1000);
+            }
+
+            gameOver(success) {
+                clearInterval(this.timerInterval);
+                
+                const optimalMoves = this.gridSize * this.gridSize;
+                const efficiency = Math.max(0, Math.min(1, optimalMoves / this.state.moves));
+                const timeBonus = this.config.timeLimit ? 
+                    Math.max(0, this.config.timeLimit - this.state.timeElapsed) * 10 : 0;
+                
+                this.state.score = Math.floor((efficiency * 1000) + timeBonus);
+                
+                const result = this.end(success);
+                console.log('🏁 Game Over:', result);
+                
+                setTimeout(() => this.showResultModal(result), 300);
+            }
+
+            showResultModal(result) {
+                document.getElementById('modalTitle').textContent = 
+                    result.success ? '🎉 All Lights Out!' : '⏰ Time Up!';
+                document.getElementById('modalRating').textContent = 
+                    { 'S': '🏆', 'A': '⭐', 'B': '👍', 'C': '👌', 'D': '💪', 'F': '📚' }[result.rating];
+                document.getElementById('modalTime').textContent = 
+                    `⏱️ ${this.formatTime(this.state.timeElapsed)}`;
+                document.getElementById('modalMessage').textContent = 
+                    result.success ? 'Brilliant!' : 'Try again!';
+                
+                document.getElementById('winModal').classList.add('show');
+                
+                if (this.config.hapticsEnabled) {
+                    this.tg.HapticFeedback.notificationOccurred(result.success ? 'success' : 'error');
+                }
+            }
+
+            closeModal() {
+                document.getElementById('winModal').classList.remove('show');
+                this.restart();
+            }
+
+            restart() {
+                clearInterval(this.timerInterval);
+                this.initGame();
+            }
+
+            getOptimalScore() { return 1000; }
+            isOptimalSolution() { return this.state.moves <= this.gridSize * this.gridSize; }
+            checkAchievements() {
+                const achievements = [];
+                if (this.isOptimalSolution()) achievements.push('optimal_solver');
+                return achievements;
+            }
+            getGameSpecificData() {
+                return {
+                    gridSize: this.gridSize,
+                    finalMoves: this.state.moves
+                };
+            }
+        }
+
+        let game;
+        try {
+            game = new LightsOut();
+            console.log('✅ Lights Out ready!');
+        } catch (error) {
+            console.error('❌ Error:', error);
+            document.getElementById('app').innerHTML = `<div class="error"><h2>❌ Error</h2><p>${error.message}</p></div>`;
+        }
+    </script>
+</body>
+</html>
