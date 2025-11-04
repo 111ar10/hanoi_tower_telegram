@@ -349,28 +349,34 @@ class TelegramMiniGame {
     sendResult(result) {
         console.log('📤 Sending result:', result);
         
-        // Method 1: Using Telegram WebApp API
-        if (this.tg.initDataUnsafe.query_id) {
-            fetch('/api/game-result', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    query_id: this.tg.initDataUnsafe.query_id,
-                    result: result
-                })
-            }).then(() => {
-                this.tg.close();
-            }).catch(err => {
-                console.error('Failed to send result:', err);
-            });
+        // Method 1: Using Telegram WebApp sendData
+        try {
+            this.tg.sendData(JSON.stringify(result));
+            console.log('✅ Result sent via sendData');
+        } catch (e) {
+            console.warn('⚠️ sendData failed:', e);
         }
         
-        // Method 2: Using postMessage (if embedded in iframe)
-        if (window.parent !== window) {
-            window.parent.postMessage({
-                type: 'GAME_RESULT',
-                payload: result
-            }, '*');
+        // Method 2: POST to your backend (optional validation)
+        if (this.config.sessionId) {
+            fetch('/api/game-result', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Telegram-Init-Data': this.tg.initData
+                },
+                body: JSON.stringify(result)
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log('✅ Result confirmed by server:', data);
+                setTimeout(() => this.tg.close(), 1000);
+            })
+            .catch(err => {
+                console.error('❌ Server error:', err);
+                // Still close on error
+                setTimeout(() => this.tg.close(), 1000);
+            });
         }
         
         // Method 3: Store in localStorage (for offline/testing)
