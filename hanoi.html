@@ -34,7 +34,7 @@
             --disk-spacing: 3px;
             --tower-height: 280px;
             
-            --debug-display: none;
+            --debug-display: none; /* SET TO block to enable DEBUG */
         }
         
         /* Responsive breakpoints */
@@ -649,26 +649,26 @@
 <body>
     <div class="container" id="app">
         <div class="game-header">
-            <div class="game-title">🗼 Tower of Hanoi</div>
+            <div class="game-title" data-i18n="game_title">🗼 Tower of Hanoi</div>
             <div class="difficulty-badge" id="difficultyBadge">Loading...</div>
             
-            <div class="timer" id="timer">Ready</div>
+            <div class="timer" id="timer" data-i18n="ready">Ready</div>
             
             <div class="stats-grid">
                 <div class="stat-box">
-                    <span class="stat-label">Moves</span>
+                    <span class="stat-label" data-i18n="moves">Moves</span>
                     <span class="stat-value" id="moves">0</span>
                 </div>
                 <div class="stat-box">
-                    <span class="stat-label">Optimal</span>
+                    <span class="stat-label" data-i18n="optimal">Optimal</span>
                     <span class="stat-value" id="optimal">-</span>
                 </div>
                 <div class="stat-box">
-                    <span class="stat-label">Hints</span>
+                    <span class="stat-label" data-i18n="hints">Hints</span>
                     <span class="stat-value" id="hints">-</span>
                 </div>
                 <div class="stat-box">
-                    <span class="stat-label">Score</span>
+                    <span class="stat-label" data-i18n="score">Score</span>
                     <span class="stat-value" id="score">0</span>
                 </div>
             </div>
@@ -695,21 +695,27 @@
             </div>
 
             <div class="controls">
-                <button class="btn-primary" id="restartBtn">🔄 Restart</button>
-                <button class="btn-secondary" id="hintBtn">💡 Hint</button>
+                <button class="btn-primary" id="restartBtn">
+                    🔄 <span data-i18n="restart">Restart</span>
+                </button>
+                <button class="btn-secondary" id="hintBtn">
+                    💡 <span data-i18n="hint">Hint</span>
+                </button>
             </div>
         </div>
     </div>
 
     <div class="modal" id="winModal">
         <div class="modal-content">
-            <h2 id="modalTitle">🎉 Victory!</h2>
+            <h2 id="modalTitle" data-i18n="victory">🎉 Victory!</h2>
             <div class="rating" id="modalRating">A</div>
             <p id="modalMoves"></p>
             <p id="modalTime"></p>
             <p id="modalScore"></p>
             <p id="modalMessage"></p>
-            <button class="btn-success" id="playAgainBtn">🎮 Play Again</button>
+            <button class="btn-success" id="playAgainBtn">
+                🎮 <span data-i18n="play_again">Play Again</span>
+            </button>
         </div>
     </div>
 
@@ -732,6 +738,176 @@
             throw new Error('Missing dependencies');
         }
 
+        // ============================================
+        // TRANSLATIONS FOR HANOI GAME
+        // ============================================
+        const HANOI_TRANSLATIONS = {
+            en: {
+                game_title: "Tower of Hanoi",
+                difficulty: "Difficulty",
+                easy: "Easy",
+                medium: "Medium",
+                hard: "Hard",
+                expert: "Expert",
+                moves: "Moves",
+                optimal: "Optimal",
+                hints: "Hints",
+                score: "Score",
+                restart: "Restart",
+                hint: "Hint",
+                no_hints: "No Hints",
+                victory: "Victory!",
+                time_up: "Time's Up!",
+                play_again: "Play Again",
+                perfect: "PERFECT!",
+                great_job: "Great job!",
+                try_again: "Try again!",
+                ready: "Ready",
+                no_limit: "No Limit"
+            },
+            es: {
+                game_title: "Torre de Hanoi",
+                difficulty: "Dificultad",
+                easy: "Fácil",
+                medium: "Medio",
+                hard: "Difícil",
+                expert: "Experto",
+                moves: "Movimientos",
+                optimal: "Óptimo",
+                hints: "Pistas",
+                score: "Puntuación",
+                restart: "Reiniciar",
+                hint: "Pista",
+                no_hints: "Sin pistas",
+                victory: "¡Victoria!",
+                time_up: "¡Tiempo agotado!",
+                play_again: "Jugar de nuevo",
+                perfect: "¡PERFECTO!",
+                great_job: "¡Buen trabajo!",
+                try_again: "¡Inténtalo de nuevo!",
+                ready: "Listo",
+                no_limit: "Sin límite"
+            },
+            ru: {
+                game_title: "Ханойская башня",
+                difficulty: "Сложность",
+                easy: "Легко",
+                medium: "Средне",
+                hard: "Сложно",
+                expert: "Эксперт",
+                moves: "Ходы",
+                optimal: "Оптимум",
+                hints: "Подсказки",
+                score: "Счёт",
+                restart: "Начать заново",
+                hint: "Подсказка",
+                no_hints: "Нет подсказок",
+                victory: "Победа!",
+                time_up: "Время вышло!",
+                play_again: "Играть снова",
+                perfect: "ИДЕАЛЬНО!",
+                great_job: "Отлично!",
+                try_again: "Попробуй ещё!",
+                ready: "Готов",
+                no_limit: "Без ограничений"
+            },
+            fr: {
+                game_title: "Tour de Hanoï",
+                difficulty: "Difficulté",
+                easy: "Facile",
+                medium: "Moyen",
+                hard: "Difficile",
+                expert: "Expert",
+                moves: "Mouvements",
+                optimal: "Optimal",
+                hints: "Indices",
+                score: "Score",
+                restart: "Recommencer",
+                hint: "Indice",
+                no_hints: "Pas d'indices",
+                victory: "Victoire!",
+                time_up: "Temps écoulé!",
+                play_again: "Rejouer",
+                perfect: "PARFAIT!",
+                great_job: "Bon travail!",
+                try_again: "Réessayer!",
+                ready: "Prêt",
+                no_limit: "Sans limite"
+            },
+            de: {
+                game_title: "Türme von Hanoi",
+                difficulty: "Schwierigkeit",
+                easy: "Einfach",
+                medium: "Mittel",
+                hard: "Schwer",
+                expert: "Experte",
+                moves: "Züge",
+                optimal: "Optimal",
+                hints: "Hinweise",
+                score: "Punktzahl",
+                restart: "Neustart",
+                hint: "Hinweis",
+                no_hints: "Keine Hinweise",
+                victory: "Sieg!",
+                time_up: "Zeit abgelaufen!",
+                play_again: "Nochmal spielen",
+                perfect: "PERFEKT!",
+                great_job: "Gut gemacht!",
+                try_again: "Nochmal versuchen!",
+                ready: "Bereit",
+                no_limit: "Keine Begrenzung"
+            },
+            pt: {
+                game_title: "Torre de Hanói",
+                difficulty: "Dificuldade",
+                easy: "Fácil",
+                medium: "Médio",
+                hard: "Difícil",
+                expert: "Especialista",
+                moves: "Movimentos",
+                optimal: "Ótimo",
+                hints: "Dicas",
+                score: "Pontuação",
+                restart: "Reiniciar",
+                hint: "Dica",
+                no_hints: "Sem dicas",
+                victory: "Vitória!",
+                time_up: "Tempo esgotado!",
+                play_again: "Jogar novamente",
+                perfect: "PERFEITO!",
+                great_job: "Bom trabalho!",
+                try_again: "Tente novamente!",
+                ready: "Pronto",
+                no_limit: "Sem limite"
+            },
+            it: {
+                game_title: "Torre di Hanoi",
+                difficulty: "Difficoltà",
+                easy: "Facile",
+                medium: "Medio",
+                hard: "Difficile",
+                expert: "Esperto",
+                moves: "Mosse",
+                optimal: "Ottimale",
+                hints: "Suggerimenti",
+                score: "Punteggio",
+                restart: "Ricomincia",
+                hint: "Suggerimento",
+                no_hints: "Nessun suggerimento",
+                victory: "Vittoria!",
+                time_up: "Tempo scaduto!",
+                play_again: "Gioca ancora",
+                perfect: "PERFETTO!",
+                great_job: "Ottimo lavoro!",
+                try_again: "Riprova!",
+                ready: "Pronto",
+                no_limit: "Senza limite"
+            }
+        };
+
+        // ============================================
+        // HANOI GAME CLASS
+        // ============================================
         class HanoiGame extends TelegramMiniGame {
             constructor() {
                 console.log('🏗️ Creating HanoiGame...');
@@ -741,6 +917,9 @@
                     gameName: 'Tower of Hanoi',
                     custom: { numDisks: 3 }
                 });
+
+                // Set translations for this game
+                this.setTranslations(HANOI_TRANSLATIONS);
 
                 this.towers = [[], [], []];
                 this.selectedTower = null;
@@ -774,6 +953,7 @@
                     Disks: ${this.config.custom.numDisks} | 
                     Time: ${this.config.timeLimit || '∞'}s (×${this.config.timeModifier})<br>
                     Hints: ${this.config.hintsCount} | 
+                    Language: ${this.config.language} | 
                     Session: ${this.config.sessionId}
                 `;
             }
@@ -782,7 +962,14 @@
                 const diskMap = { 1: 3, 2: 4, 3: 5, 4: 6 };
                 this.config.custom.numDisks = diskMap[this.config.difficulty] || 3;
                 
-                const diffNames = ['Easy', 'Medium', 'Hard', 'Expert'];
+                // Use translations for difficulty names
+                const diffNames = [
+                    this.t('easy'),
+                    this.t('medium'),
+                    this.t('hard'),
+                    this.t('expert')
+                ];
+                
                 const badge = document.getElementById('difficultyBadge');
                 badge.textContent = `${diffNames[this.config.difficulty - 1]} (${this.config.custom.numDisks} disks)`;
                 badge.className = `difficulty-badge diff-${this.config.difficulty}`;
@@ -803,6 +990,13 @@
                 this.state.hintsUsed = 0;
                 this.state.score = 0;
                 
+                // 📍 MILESTONE: Game start
+                this.recordMilestone('game_start', {
+                    difficulty: this.config.difficulty,
+                    numDisks: this.config.custom.numDisks,
+                    timeLimit: this.config.timeLimit
+                });
+                
                 this.updateDisplay();
                 this.updateStats();
                 this.start();
@@ -814,7 +1008,10 @@
                 
                 const hintBtn = document.getElementById('hintBtn');
                 hintBtn.disabled = this.config.hintsCount === 0;
-                hintBtn.textContent = this.config.hintsCount === 0 ? '💡 No Hints' : '💡 Hint';
+                
+                // Use translation for button text
+                const hintText = this.config.hintsCount === 0 ? this.t('no_hints') : this.t('hint');
+                hintBtn.querySelector('span').textContent = hintText;
                 
                 console.log('✅ Game initialized! Towers:', this.towers);
             }
@@ -824,7 +1021,7 @@
                 const timerEl = document.getElementById('timer');
                 
                 if (!this.config.timeLimit) {
-                    timerEl.textContent = '♾️ No Limit';
+                    timerEl.textContent = `♾️ ${this.t('no_limit')}`;
                     return;
                 }
                 
@@ -844,6 +1041,16 @@
                     timerEl.textContent = `⏱️ ${mins}:${secs.toString().padStart(2, '0')}`;
                     timerEl.classList.toggle('warning', remaining <= 30);
                 }, 1000);
+            }
+
+            // Override captureGameState for Hanoi-specific milestone data
+            captureGameState() {
+                return {
+                    towers: JSON.parse(JSON.stringify(this.towers)), // Deep copy
+                    selectedTower: this.selectedTower,
+                    numDisks: this.config.custom.numDisks,
+                    disksOnTarget: this.towers[2].length
+                };
             }
 
             selectTower(index) {
@@ -910,6 +1117,26 @@
                 this.towers[to].push(disk);
                 this.updateDisplay();
                 this.sendEvent('disk_moved', { from, to, disk, moves: this.state.moves });
+                
+                // 📍 MILESTONES: Progress checkpoints
+                const progress = this.towers[2].length / this.config.custom.numDisks;
+                
+                if (progress === 0.25 && !this.milestones.find(m => m.name === 'quarter_complete')) {
+                    this.recordMilestone('quarter_complete', {
+                        disksOnTarget: this.towers[2].length,
+                        totalDisks: this.config.custom.numDisks
+                    });
+                } else if (progress === 0.5 && !this.milestones.find(m => m.name === 'half_complete')) {
+                    this.recordMilestone('half_complete', {
+                        disksOnTarget: this.towers[2].length,
+                        totalDisks: this.config.custom.numDisks
+                    });
+                } else if (progress === 0.75 && !this.milestones.find(m => m.name === 'three_quarters_complete')) {
+                    this.recordMilestone('three_quarters_complete', {
+                        disksOnTarget: this.towers[2].length,
+                        totalDisks: this.config.custom.numDisks
+                    });
+                }
             }
 
             updateDisplay() {
@@ -955,6 +1182,14 @@
                 }
                 
                 this.state.hintsUsed++;
+                
+                // 📍 MILESTONE: Hint used
+                this.recordMilestone('hint_used', {
+                    hintNumber: this.state.hintsUsed,
+                    hintsRemaining: this.config.hintsCount - this.state.hintsUsed,
+                    currentMoves: this.state.moves
+                });
+                
                 document.getElementById('hints').textContent = this.config.hintsCount - this.state.hintsUsed;
                 
                 const move = this.findValidMove();
@@ -964,7 +1199,7 @@
                 
                 if (this.state.hintsUsed >= this.config.hintsCount) {
                     document.getElementById('hintBtn').disabled = true;
-                    document.getElementById('hintBtn').textContent = '💡 No Hints';
+                    document.getElementById('hintBtn').querySelector('span').textContent = this.t('no_hints');
                 }
             }
 
@@ -980,7 +1215,21 @@
             }
 
             checkWin() {
-                return this.towers[2].length === this.config.custom.numDisks;
+                const won = this.towers[2].length === this.config.custom.numDisks;
+                
+                if (won) {
+                    // 📍 MILESTONE: Victory
+                    const optimal = Math.pow(2, this.config.custom.numDisks) - 1;
+                    this.recordMilestone('victory', {
+                        moves: this.state.moves,
+                        optimal: optimal,
+                        mistakes: this.state.mistakes,
+                        hintsUsed: this.state.hintsUsed,
+                        isPerfect: this.state.moves === optimal && this.state.mistakes === 0
+                    });
+                }
+                
+                return won;
             }
 
             gameOver(success) {
@@ -1004,19 +1253,26 @@
             showResultModal(result) {
                 const optimal = Math.pow(2, this.config.custom.numDisks) - 1;
                 
+                // Use translations
                 document.getElementById('modalTitle').textContent = 
-                    result.success ? '🎉 Victory!' : '⏰ Time Up!';
+                    result.success ? `🎉 ${this.t('victory')}` : `⏰ ${this.t('time_up')}`;
+                
                 document.getElementById('modalRating').textContent = 
                     { 'S': '🏆', 'A': '⭐', 'B': '👍', 'C': '👌', 'D': '💪', 'F': '📚' }[result.rating];
+                
                 document.getElementById('modalMoves').textContent = 
-                    `Moves: ${this.state.moves} / ${optimal} (${result.rating})`;
+                    `${this.t('moves')}: ${this.state.moves} / ${optimal} (${result.rating})`;
+                
                 document.getElementById('modalTime').textContent = 
                     `⏱️ ${this.formatTime(this.state.timeElapsed)}`;
+                
                 document.getElementById('modalScore').textContent = 
-                    `⭐ Score: ${this.state.score}`;
+                    `⭐ ${this.t('score')}: ${this.state.score}`;
+                
+                const isPerfect = this.state.moves === optimal && this.state.mistakes === 0;
                 document.getElementById('modalMessage').textContent = 
-                    this.state.moves === optimal && this.state.mistakes === 0 ? '🏆 PERFECT!' : 
-                    result.success ? 'Great job!' : 'Try again!';
+                    isPerfect ? `🏆 ${this.t('perfect')}` : 
+                    result.success ? this.t('great_job') : this.t('try_again');
                 
                 document.getElementById('winModal').classList.add('show');
             }
@@ -1057,7 +1313,8 @@
                 return {
                     numDisks: this.config.custom.numDisks,
                     optimal: Math.pow(2, this.config.custom.numDisks) - 1,
-                    towers: this.towers
+                    towers: this.towers,
+                    efficiency: Math.min(1, Math.pow(2, this.config.custom.numDisks) - 1 / this.state.moves)
                 };
             }
         }

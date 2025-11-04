@@ -32,6 +32,9 @@ class TelegramMiniGame {
             sessionId: null,         // unique session identifier
             userId: null,            // Telegram user ID
             
+            // Language support
+            language: 'en',          // default language
+            
             // Custom game-specific config
             custom: gameConfig.custom || {}
         };
@@ -46,6 +49,12 @@ class TelegramMiniGame {
             endTime: null,
             timeElapsed: 0
         };
+        
+        // Milestone tracking
+        this.milestones = [];
+        
+        // Language support (to be populated by child class)
+        this.translations = {};
         
         this.tg = window.Telegram.WebApp;
         this.initTelegram();
@@ -70,10 +79,23 @@ class TelegramMiniGame {
         if (urlParams.has('scoreModifier')) 
             this.config.scoreModifier = parseFloat(urlParams.get('scoreModifier'));
         
+        // Language parameter
+        if (urlParams.has('lang') || urlParams.has('language')) {
+            this.config.language = urlParams.get('lang') || urlParams.get('language');
+        }
+        
         // Get user from Telegram
         if (this.tg.initDataUnsafe.user) {
             this.config.userId = this.tg.initDataUnsafe.user.id;
+            
+            // Auto-detect language from Telegram user if not specified
+            if (!urlParams.has('lang') && !urlParams.has('language')) {
+                this.config.language = this.tg.initDataUnsafe.user.language_code || 'en';
+            }
         }
+        
+        // Normalize language code (e.g., 'en-US' -> 'en')
+        this.config.language = this.config.language.split('-')[0].toLowerCase();
         
         // Apply time modifier
         if (this.config.timeLimit) {
@@ -95,13 +117,162 @@ class TelegramMiniGame {
         this.tg.onEvent('themeChanged', () => this.handleThemeChange());
     }
     
+    // ============================================
+    // LANGUAGE SUPPORT METHODS
+    // ============================================
+    
+    /**
+     * Set translations for this game
+     * Should be called by child class in constructor
+     * @param {Object} translations - Object with language codes as keys
+     * Example: { en: {...}, es: {...}, ru: {...} }
+     */
+    setTranslations(translations) {
+        this.translations = translations;
+        console.log(`🌍 Translations loaded for: ${Object.keys(translations).join(', ')}`);
+        
+        // Apply translations after DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.applyTranslations());
+        } else {
+            this.applyTranslations();
+        }
+    }
+    
+    /**
+     * Get translation for a key
+     * @param {string} key - Translation key
+     * @param {string} fallback - Optional fallback text
+     * @returns {string} Translated text
+     */
+    t(key, fallback = null) {
+        const lang = this.config.language;
+        
+        // Try current language
+        if (this.translations[lang] && this.translations[lang][key]) {
+            return this.translations[lang][key];
+        }
+        
+        // Try English fallback
+        if (lang !== 'en' && this.translations.en && this.translations.en[key]) {
+            return this.translations.en[key];
+        }
+        
+        // Return fallback or key
+        return fallback || key;
+    }
+    
+    /**
+     * Apply translations to DOM elements with data-i18n attribute
+     */
+    applyTranslations() {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            const translation = this.t(key);
+            
+            // Check if element has child elements
+            if (el.children.length === 0) {
+                el.textContent = translation;
+            } else {
+                // Find text nodes and replace
+                Array.from(el.childNodes).forEach(node => {
+                    if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+                        node.textContent = translation;
+                    }
+                });
+            }
+        });
+        
+        // Also handle data-i18n-placeholder for input fields
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const key = el.getAttribute('data-i18n-placeholder');
+            el.placeholder = this.t(key);
+        });
+        
+        console.log(`✅ Translations applied (${this.config.language})`);
+    }
+    
+    // ============================================
+    // MILESTONE CHECKPOINT METHODS
+    // ============================================
+    
+    /**
+     * Record a milestone checkpoint
+     * @param {string} milestoneName - Name/identifier of the milestone
+     * @param {Object} metadata - Additional metadata for this milestone
+     * @returns {Object} The recorded milestone object
+     */
+    recordMilestone(milestoneName, metadata = {}) {
+        const milestone = {
+            name: milestoneName,
+            timestamp: Date.now(),
+            gameTime: this.state.startTime ? 
+                Math.floor((Date.now() - this.state.startTime) / 1000) : 0,
+            
+            // Current game state snapshot
+            state: {
+                score: this.state.score,
+                moves: this.state.moves,
+                mistakes: this.state.mistakes,
+                hintsUsed: this.state.hintsUsed
+            },
+            
+            // Game-specific data (override captureGameState in child class)
+            gameData: this.captureGameState(),
+            
+            // Additional metadata
+            metadata: metadata
+        };
+        
+        this.milestones.push(milestone);
+        
+        console.log(`📍 Milestone: ${milestoneName}`, milestone);
+        
+        // Send event for analytics
+        this.sendEvent('milestone_reached', {
+            milestone: milestoneName,
+            gameTime: milestone.gameTime,
+            score: this.state.score
+        });
+        
+        return milestone;
+    }
+    
+    /**
+     * Override this method in child class to capture game-specific state
+     * @returns {Object} Game-specific state data
+     */
+    captureGameState() {
+        return {};
+    }
+    
+    /**
+     * Get summary of all milestones
+     * @returns {Object|null} Milestone summary or null if no milestones
+     */
+    getMilestonesSummary() {
+        if (this.milestones.length === 0) return null;
+        
+        return {
+            count: this.milestones.length,
+            milestones: this.milestones,
+            firstMilestone: this.milestones[0],
+            lastMilestone: this.milestones[this.milestones.length - 1]
+        };
+    }
+    
+    // ============================================
+    // GAME LIFECYCLE METHODS
+    // ============================================
+    
     // Start game
     start() {
         this.state.status = 'playing';
         this.state.startTime = Date.now();
         this.sendEvent('game_started', {
             difficulty: this.config.difficulty,
-            timeLimit: this.config.timeLimit
+            timeLimit: this.config.timeLimit,
+            language: this.config.language
         });
         console.log('🎮 Game started');
     }
@@ -152,6 +323,7 @@ class TelegramMiniGame {
             
             // Configuration used
             difficulty: this.config.difficulty,
+            language: this.config.language,
             modifiers: {
                 timeModifier: this.config.timeModifier,
                 scoreModifier: this.config.scoreModifier,
@@ -161,6 +333,9 @@ class TelegramMiniGame {
             // Additional context
             optimal: this.isOptimalSolution(),
             achievements: this.checkAchievements(),
+            
+            // Milestone data
+            milestones: this.getMilestonesSummary(),
             
             // Game-specific data
             gameData: this.getGameSpecificData(),
