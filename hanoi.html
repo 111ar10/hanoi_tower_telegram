@@ -1304,8 +1304,25 @@
                     (this.state.mistakes * 50) - 
                     (this.state.hintsUsed * 100)
                 ));
-
+            
                 const result = this.end(success);
+                
+                // ✅ DEBUG: Check result size BEFORE sending
+                const resultString = JSON.stringify(result);
+                console.log('📏 Result size:', resultString.length, 'bytes (limit: 4096)');
+                
+                if (resultString.length > 4096) {
+                    alert(`⚠️ RESULT TOO LARGE!\n\nSize: ${resultString.length} bytes\nLimit: 4096 bytes\n\nRemoving milestones...`);
+                    
+                    // Remove large data
+                    result.milestones = null;
+                    result.gameData = null;
+                    
+                    const newSize = JSON.stringify(result).length;
+                    console.log('📏 New size:', newSize, 'bytes');
+                    alert(`✅ Reduced to: ${newSize} bytes`);
+                }
+                
                 this.showResultModal(result);
             }
 
@@ -1378,37 +1395,22 @@
             }
 
             // 🆕 NEW: Override sendResult to show visual feedback
-            // Override sendResult to show sending overlay
             sendResult(result) {
-                console.log('📤 [HANOI] Hanoi game sendResult called');
-                console.log('📤 [HANOI] Result:', result);
+                console.log('📤 Hanoi: Sending result...');
                 
                 // Show sending overlay
                 const overlay = document.getElementById('sendingOverlay');
                 if (overlay) {
-                    console.log('📤 [HANOI] Showing overlay...');
                     overlay.classList.add('show');
-                } else {
-                    console.warn('⚠️ [HANOI] Overlay element not found!');
                 }
                 
                 // Small delay for visual feedback
                 setTimeout(() => {
-                    console.log('📤 [HANOI] Calling parent sendResult...');
+                    // Call parent class sendResult (uses Telegram.WebApp.sendData)
+                    super.sendResult(result);
                     
-                    try {
-                        // Call parent class sendResult (uses Telegram.WebApp.sendData)
-                        super.sendResult(result);
-                        console.log('✅ [HANOI] Parent sendResult completed');
-                    } catch (error) {
-                        console.error('❌ [HANOI] Error calling parent sendResult:', error);
-                        alert('Error in parent sendResult:\n\n' + error.message);
-                        
-                        // Hide overlay on error
-                        if (overlay) {
-                            overlay.classList.remove('show');
-                        }
-                    }
+                    // Note: overlay will disappear when WebApp closes automatically
+                    // No need to manually hide it
                 }, 300);
             }
         }
