@@ -241,7 +241,46 @@
 
         sendData: function(data) {
             console.log('📤 sendData called:', data);
-            alert('Data sent to bot:\n\n' + (typeof data === 'string' ? data : JSON.stringify(data, null, 2)));
+            
+            try {
+                // Parse the data to validate it's proper JSON
+                const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+                
+                // Store it for inspection
+                localStorage.setItem('last_telegram_sendData', data);
+                localStorage.setItem('last_telegram_sendData_time', new Date().toISOString());
+                
+                // Create a nice display
+                const displayData = JSON.stringify(parsed, null, 2);
+                
+                // Show in console with styling
+                console.log('%c📤 MOCK: Data that would be sent to bot:', 'background: #2481cc; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;');
+                console.log(parsed);
+                
+                // Show user-friendly alert
+                const summary = `
+        ✅ Game Result Ready!
+        
+        Session: ${parsed.sessionId || 'N/A'}
+        Score: ${parsed.score || 0}
+        Status: ${parsed.success ? '✅ Success' : '❌ Failed'}
+        Time: ${parsed.timeElapsed || 0}s
+        
+        In a real Telegram environment, this would be sent to your bot.
+        Data saved to localStorage for inspection.
+                `.trim();
+                
+                alert(summary);
+                
+                // Also show the full data in console
+                console.log('Full data stored in localStorage.last_telegram_sendData');
+                
+                return true;
+            } catch (e) {
+                console.error('❌ sendData validation failed:', e);
+                alert('Error: Invalid data format\n\n' + e.message);
+                return false;
+            }
         },
 
         ready: function() {

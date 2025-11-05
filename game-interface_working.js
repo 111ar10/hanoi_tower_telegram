@@ -346,6 +346,7 @@ class TelegramMiniGame {
     }
     
     // Send result back to Telegram bot
+    // Send result back to Telegram bot
     sendResult(result) {
         console.log('📤 Sending result:', result);
         
@@ -493,10 +494,10 @@ class TelegramMiniGame {
 }
 
 // ============================================
-// 🔧 DEVELOPMENT HELPERS - REGISTERED IMMEDIATELY
+// 🔧 DEVELOPMENT HELPERS
 // ============================================
 
-// Helper 1: Inspect last game result
+// Make inspector available immediately (not waiting for localhost check)
 window.inspectLastResult = function() {
     const result = localStorage.getItem('game_result_latest');
     if (result) {
@@ -505,25 +506,21 @@ window.inspectLastResult = function() {
             console.log('%c📋 Last Game Result:', 'background: #4CAF50; color: white; padding: 8px; font-size: 14px; font-weight: bold;');
             console.table(parsed);
             console.log('Full object:', parsed);
-            console.log('%c💡 Returned object assigned to window.lastResult', 'background: #2196F3; color: white; padding: 4px;');
-            window.lastResult = parsed;
+            console.log('%c💡 Tip: Returned object is available as result', 'background: #2196F3; color: white; padding: 4px;');
             return parsed;
         } catch (e) {
-            console.error('❌ Error parsing result:', e);
+            console.error('Error parsing result:', e);
             console.log('Raw data:', result);
             return result;
         }
     } else {
         console.log('ℹ️ No result found in localStorage');
-        const gameKeys = Object.keys(localStorage).filter(k => k.includes('game'));
-        if (gameKeys.length > 0) {
-            console.log('Available game keys:', gameKeys);
-        }
+        console.log('Available keys:', Object.keys(localStorage).filter(k => k.includes('game')));
         return null;
     }
 };
 
-// Helper 2: Inspect data sent to Telegram
+// Additional helper: check what was sent via sendData
 window.inspectTelegramData = function() {
     const data = localStorage.getItem('last_telegram_sendData');
     const time = localStorage.getItem('last_telegram_sendData_time');
@@ -532,25 +529,21 @@ window.inspectTelegramData = function() {
         try {
             const parsed = JSON.parse(data);
             console.log('%c📤 Last Telegram sendData:', 'background: #2481cc; color: white; padding: 8px; font-size: 14px; font-weight: bold;');
-            console.log('📅 Sent at:', time);
-            console.log('📏 Size:', data.length, 'bytes (limit: 4096)');
+            console.log('Sent at:', time);
             console.table(parsed);
             console.log('Full object:', parsed);
-            console.log('%c💡 Returned object assigned to window.telegramData', 'background: #2196F3; color: white; padding: 4px;');
-            window.telegramData = parsed;
             return parsed;
         } catch (e) {
-            console.error('❌ Error parsing data:', e);
+            console.error('Error parsing data:', e);
             return data;
         }
     } else {
         console.log('ℹ️ No Telegram data sent yet');
-        console.log('💡 Play a game first, then try again');
         return null;
     }
 };
 
-// Helper 3: Clear all game data
+// Helper: clear all game data
 window.clearGameData = function() {
     const keys = Object.keys(localStorage).filter(k => 
         k.includes('game_result') || 
@@ -558,63 +551,30 @@ window.clearGameData = function() {
         k.includes('mock_telegram')
     );
     
-    if (keys.length === 0) {
-        console.log('ℹ️ No game data to clear');
-        return;
-    }
-    
     console.log(`🗑️ Clearing ${keys.length} game-related items...`);
     keys.forEach(key => {
-        console.log(`  ❌ ${key}`);
+        console.log(`  - ${key}`);
         localStorage.removeItem(key);
     });
-    console.log('✅ All game data cleared!');
+    console.log('✅ Cleared!');
 };
 
-// Helper 4: Show all localStorage game data
-window.showAllGameData = function() {
-    const keys = Object.keys(localStorage).filter(k => 
-        k.includes('game') || k.includes('telegram')
-    );
-    
-    if (keys.length === 0) {
-        console.log('ℹ️ No game data in localStorage');
-        return;
-    }
-    
-    console.log('%c💾 All Game Data in localStorage:', 'background: #9C27B0; color: white; padding: 8px; font-size: 14px; font-weight: bold;');
-    keys.forEach(key => {
-        const value = localStorage.getItem(key);
-        console.log(`\n🔑 ${key}:`);
-        try {
-            const parsed = JSON.parse(value);
-            console.table(parsed);
-        } catch {
-            console.log(value);
-        }
-    });
-};
+// Show available commands
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    console.log('%c💡 Development Mode Active', 'background: #FF9800; color: white; padding: 8px; font-size: 14px; font-weight: bold;');
+    console.log('%cAvailable Commands:', 'font-weight: bold; font-size: 12px;');
+    console.log('  📋 inspectLastResult()     - View last game result');
+    console.log('  📤 inspectTelegramData()   - View data sent to Telegram');
+    console.log('  🗑️ clearGameData()         - Clear all game data from localStorage');
+    console.log('  🎮 game                    - Access current game instance');
+}
 
-// Show available commands on load
-(function() {
-    const isDev = window.location.hostname === 'localhost' || 
-                  window.location.hostname === '127.0.0.1' ||
-                  window.location.hostname === '';
-    
-    if (isDev) {
-        console.log('%c💡 Development Mode - Helper Functions Available', 'background: #FF9800; color: white; padding: 8px; font-size: 14px; font-weight: bold;');
-        console.log('%cAvailable Commands:', 'font-weight: bold; font-size: 12px; color: #2196F3;');
-        console.log('  📋 inspectLastResult()     - View last game result');
-        console.log('  📤 inspectTelegramData()   - View data sent to Telegram');
-        console.log('  🗑️ clearGameData()         - Clear all game data');
-        console.log('  💾 showAllGameData()       - Show all localStorage game data');
-        console.log('  🎮 game                    - Access current game instance');
-        console.log('');
-    }
-})();
-
-// Make class available globally
+// Make available globally
 window.TelegramMiniGame = TelegramMiniGame;
 
 console.log('✅ TelegramMiniGame framework loaded');
-console.log('✅ Helper functions registered globally');
+
+// Make available globally
+window.TelegramMiniGame = TelegramMiniGame;
+
+console.log('✅ TelegramMiniGame framework loaded');
