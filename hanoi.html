@@ -1378,22 +1378,37 @@
             }
 
             // 🆕 NEW: Override sendResult to show visual feedback
+            // Override sendResult to show sending overlay
             sendResult(result) {
-                console.log('📤 Hanoi: Sending result...');
+                console.log('📤 [HANOI] Hanoi game sendResult called');
+                console.log('📤 [HANOI] Result:', result);
                 
                 // Show sending overlay
                 const overlay = document.getElementById('sendingOverlay');
                 if (overlay) {
+                    console.log('📤 [HANOI] Showing overlay...');
                     overlay.classList.add('show');
+                } else {
+                    console.warn('⚠️ [HANOI] Overlay element not found!');
                 }
                 
                 // Small delay for visual feedback
                 setTimeout(() => {
-                    // Call parent class sendResult (uses Telegram.WebApp.sendData)
-                    super.sendResult(result);
+                    console.log('📤 [HANOI] Calling parent sendResult...');
                     
-                    // Note: overlay will disappear when WebApp closes automatically
-                    // No need to manually hide it
+                    try {
+                        // Call parent class sendResult (uses Telegram.WebApp.sendData)
+                        super.sendResult(result);
+                        console.log('✅ [HANOI] Parent sendResult completed');
+                    } catch (error) {
+                        console.error('❌ [HANOI] Error calling parent sendResult:', error);
+                        alert('Error in parent sendResult:\n\n' + error.message);
+                        
+                        // Hide overlay on error
+                        if (overlay) {
+                            overlay.classList.remove('show');
+                        }
+                    }
                 }, 300);
             }
         }
