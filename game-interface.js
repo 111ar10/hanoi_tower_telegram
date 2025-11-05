@@ -348,106 +348,143 @@ class TelegramMiniGame {
     // Send result back to Telegram bot
     // Send result back to Telegram bot
     sendResult(result) {
-        console.log('📤 [SEND] Starting sendResult...');
-        console.log('📤 [SEND] Result object:', result);
+        console.log('📤 Sending result:', result);
         
         // Validate result has required fields
         if (!result.sessionId || !result.gameId) {
-            console.error('❌ [SEND] Invalid result: missing sessionId or gameId');
-            alert('ERROR: Invalid result data\n\nMissing: ' + 
-                (!result.sessionId ? 'sessionId ' : '') + 
-                (!result.gameId ? 'gameId' : ''));
+            console.error('❌ Invalid result: missing sessionId or gameId');
             return;
         }
         
         try {
-            // Convert to JSON string (Telegram requires string)
-            const resultString = JSON.stringify(result);
-            console.log('📤 [SEND] Result string length:', resultString.length);
+            // ✅ IMPORTANT: Remove large/unnecessary data to fit in 4096 bytes
+            const compactResult = {
+                // Essential metadata
+                sessionId: result.sessionId,
+                gameId: result.gameId,
+                gameName: result.gameName,
+                userId: result.userId,
+                timestamp: result.timestamp,
+                
+                // Game outcome
+                success: result.success,
+                status: result.status,
+                
+                // Performance metrics (essential)
+                score: result.score,
+                finalScore: result.finalScore,
+                moves: result.moves,
+                mistakes: result.mistakes,
+                hintsUsed: result.hintsUsed,
+                
+                // Time metrics
+                timeElapsed: result.timeElapsed,
+                timeLimit: result.timeLimit,
+                timeRemaining: result.timeRemaining,
+                
+                // Performance rating
+                performance: result.performance,
+                rating: result.rating,
+                
+                // Configuration
+                difficulty: result.difficulty,
+                language: result.language,
+                
+                // Additional context
+                optimal: result.optimal,
+                achievements: result.achievements || [],
+                
+                // ❌ REMOVED to save space:
+                // - milestones (can be huge!)
+                // - gameData (detailed state)
+                // - modifiers (not needed for result)
+                // - outputString (can regenerate)
+                
+                // Minimal milestone summary
+                milestoneCount: result.milestones?.count || 0
+            };
             
-            // Check size (Telegram limit is 4096 bytes)
+            // Convert to JSON string (Telegram requires string)
+            const resultString = JSON.stringify(compactResult);
+            
+            console.log(`📏 Result size: ${resultString.length} bytes (limit: 4096)`);
+            
+            // Final size check
             if (resultString.length > 4096) {
-                console.warn(`⚠️ [SEND] Result size: ${resultString.length} bytes (limit: 4096)`);
-                alert(`WARNING: Result too large!\n\nSize: ${resultString.length} bytes\nLimit: 4096 bytes`);
-                // Truncate or compress if needed
-                const truncatedResult = {
-                    ...result,
-                    milestones: null, // Remove milestones to save space
-                    gameData: null    // Remove detailed game data
+                console.error(`❌ Result still too large: ${resultString.length} bytes`);
+                
+                // Emergency ultra-compact version
+                const ultraCompact = {
+                    sessionId: result.sessionId,
+                    gameId: result.gameId,
+                    userId: result.userId,
+                    success: result.success,
+                    score: result.score,
+                    moves: result.moves,
+                    timeElapsed: result.timeElapsed,
+                    rating: result.rating,
+                    difficulty: result.difficulty
                 };
-                const truncatedString = JSON.stringify(truncatedResult);
-                console.log('📤 [SEND] Truncated to:', truncatedString.length, 'bytes');
-                resultString = truncatedString;
+                
+                const ultraString = JSON.stringify(ultraCompact);
+                console.log(`📏 Ultra-compact size: ${ultraString.length} bytes`);
+                
+                if (ultraString.length > 4096) {
+                    alert('ERROR: Cannot compress result enough!\n\nPlease report this issue.');
+                    return;
+                }
+                
+                resultString = ultraString;
             }
             
-            console.log('✅ [SEND] Result validated:', resultString.length, 'bytes');
-            
-            // Check Telegram object
-            console.log('📤 [SEND] Telegram object exists:', !!this.tg);
-            console.log('📤 [SEND] sendData function exists:', typeof this.tg.sendData);
+            console.log(`✅ Result validated: ${resultString.length} bytes`);
             
             // ✅ PRIMARY METHOD: Telegram's native sendData
             if (this.tg && typeof this.tg.sendData === 'function') {
-                console.log('📤 [SEND] Calling Telegram.WebApp.sendData()...');
                 
-                // Store for debugging
-                localStorage.setItem('last_send_attempt', new Date().toISOString());
-                localStorage.setItem('last_send_data', resultString);
+                console.log('📤 Calling Telegram.WebApp.sendData()...');
                 
-                try {
-                    this.tg.sendData(resultString);
-                    console.log('✅ [SEND] sendData() called successfully');
-                    
-                    // Check if it's real Telegram or mock
-                    const isRealTelegram = !window.location.hostname.includes('localhost') && 
-                                          !window.location.hostname.includes('127.0.0.1');
-                    
-                    console.log('📤 [SEND] Environment:', isRealTelegram ? 'REAL TELEGRAM' : 'LOCAL MOCK');
-                    
-                    if (isRealTelegram) {
-                        // Real Telegram - close immediately
-                        console.log('🚪 [SEND] Closing WebApp in real Telegram...');
-                        this.tg.close();
-                    } else {
-                        // Mock - show confirmation
-                        console.log('🧪 [SEND] Mock environment - not closing');
-                        alert('✅ Result sent successfully!\n\n(Mock mode - WebApp would close in real Telegram)');
-                    }
-                    
-                    return; // Exit - we're done!
-                    
-                } catch (sendError) {
-                    console.error('❌ [SEND] sendData() threw error:', sendError);
-                    alert('ERROR calling sendData:\n\n' + sendError.message);
-                }
+                // Save to localStorage for debugging
+                localStorage.setItem('game_result_latest', resultString);
+                localStorage.setItem('last_send_time', new Date().toISOString());
                 
-            } else {
-                console.error('❌ [SEND] sendData not available!');
-                console.log('Telegram object:', this.tg);
+                // Send data
+                this.tg.sendData(resultString);
+                console.log('✅ Result sent via Telegram.WebApp.sendData()');
+                
+                // ⚠️ DON'T close immediately - let Telegram process the data first
+                setTimeout(() => {
+                    console.log('🚪 Closing WebApp...');
+                    this.tg.close();
+                }, 2000); // ✅ Increased delay to 2 seconds
+                
+                return; // Exit - we're done!
             }
             
-            // ⚠️ FALLBACK: If sendData not available
-            console.warn('⚠️ [SEND] Telegram.WebApp.sendData() not available');
-            console.log('💾 [SEND] Saving to localStorage instead');
+            // ⚠️ FALLBACK: If sendData not available (shouldn't happen in real Telegram)
+            console.warn('⚠️ Telegram.WebApp.sendData() not available');
+            console.log('💾 Saving to localStorage instead');
             
             // Save locally for testing/debugging
             localStorage.setItem(`game_result_${this.config.sessionId}`, resultString);
             localStorage.setItem(`game_result_latest`, resultString);
             
-            alert('⚠️ sendData not available!\n\nResult saved to localStorage (testing mode)');
+            alert('Game completed!\n\nResult saved to localStorage (testing mode)');
             
         } catch (e) {
-            console.error('❌ [SEND] Error in sendResult:', e);
-            console.error('Stack:', e.stack);
+            console.error('❌ Error sending result:', e);
             
             // Emergency fallback
             localStorage.setItem(`game_result_error_${Date.now()}`, JSON.stringify({
                 error: e.message,
-                stack: e.stack,
-                result: result
+                result: {
+                    sessionId: result.sessionId,
+                    gameId: result.gameId,
+                    score: result.score
+                }
             }));
             
-            alert('❌ ERROR sending result:\n\n' + e.message + '\n\nData saved locally for recovery.');
+            alert('Error sending result. Data saved locally for recovery.');
         }
     }
     
