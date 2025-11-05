@@ -596,6 +596,58 @@
             font-size: clamp(14px, 4vw, 16px);
         }
         
+        /* ========================================== */
+        /* 🆕 SENDING OVERLAY - NEW */
+        /* ========================================== */
+        .sending-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(102, 126, 234, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .sending-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .sending-overlay h2 {
+            color: white;
+            font-size: clamp(24px, 7vw, 32px);
+            margin-bottom: 20px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .sending-overlay p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: clamp(14px, 4vw, 16px);
+        }
+
+        .sending-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-top: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        /* ========================================== */
+        
         /* Landscape orientation fixes for mobile */
         @media (max-height: 600px) and (orientation: landscape) {
             :root {
@@ -717,6 +769,13 @@
                 🎮 <span data-i18n="play_again">Play Again</span>
             </button>
         </div>
+    </div>
+
+    <!-- 🆕 NEW: Sending overlay -->
+    <div class="sending-overlay" id="sendingOverlay">
+        <h2>📤 Sending Result...</h2>
+        <p>Please wait</p>
+        <div class="sending-spinner"></div>
     </div>
 
     <script>
@@ -1316,6 +1375,26 @@
                     towers: this.towers,
                     efficiency: Math.min(1, Math.pow(2, this.config.custom.numDisks) - 1 / this.state.moves)
                 };
+            }
+
+            // 🆕 NEW: Override sendResult to show visual feedback
+            sendResult(result) {
+                console.log('📤 Hanoi: Sending result...');
+                
+                // Show sending overlay
+                const overlay = document.getElementById('sendingOverlay');
+                if (overlay) {
+                    overlay.classList.add('show');
+                }
+                
+                // Small delay for visual feedback
+                setTimeout(() => {
+                    // Call parent class sendResult (uses Telegram.WebApp.sendData)
+                    super.sendResult(result);
+                    
+                    // Note: overlay will disappear when WebApp closes automatically
+                    // No need to manually hide it
+                }, 300);
             }
         }
 
