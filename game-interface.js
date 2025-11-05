@@ -346,61 +346,108 @@ class TelegramMiniGame {
     }
     
     // Send result back to Telegram bot
+    // Send result back to Telegram bot
     sendResult(result) {
-        console.log('📤 Sending result:', result);
+        console.log('📤 [SEND] Starting sendResult...');
+        console.log('📤 [SEND] Result object:', result);
         
         // Validate result has required fields
         if (!result.sessionId || !result.gameId) {
-            console.error('❌ Invalid result: missing sessionId or gameId');
+            console.error('❌ [SEND] Invalid result: missing sessionId or gameId');
+            alert('ERROR: Invalid result data\n\nMissing: ' + 
+                (!result.sessionId ? 'sessionId ' : '') + 
+                (!result.gameId ? 'gameId' : ''));
             return;
         }
         
         try {
             // Convert to JSON string (Telegram requires string)
             const resultString = JSON.stringify(result);
+            console.log('📤 [SEND] Result string length:', resultString.length);
             
             // Check size (Telegram limit is 4096 bytes)
             if (resultString.length > 4096) {
-                console.warn(`⚠️ Result size: ${resultString.length} bytes (limit: 4096)`);
-                // Could compress or truncate here if needed
+                console.warn(`⚠️ [SEND] Result size: ${resultString.length} bytes (limit: 4096)`);
+                alert(`WARNING: Result too large!\n\nSize: ${resultString.length} bytes\nLimit: 4096 bytes`);
+                // Truncate or compress if needed
+                const truncatedResult = {
+                    ...result,
+                    milestones: null, // Remove milestones to save space
+                    gameData: null    // Remove detailed game data
+                };
+                const truncatedString = JSON.stringify(truncatedResult);
+                console.log('📤 [SEND] Truncated to:', truncatedString.length, 'bytes');
+                resultString = truncatedString;
             }
             
-            console.log(`✅ Result validated: ${resultString.length} bytes`);
+            console.log('✅ [SEND] Result validated:', resultString.length, 'bytes');
+            
+            // Check Telegram object
+            console.log('📤 [SEND] Telegram object exists:', !!this.tg);
+            console.log('📤 [SEND] sendData function exists:', typeof this.tg.sendData);
             
             // ✅ PRIMARY METHOD: Telegram's native sendData
             if (this.tg && typeof this.tg.sendData === 'function') {
-                this.tg.sendData(resultString);
-                console.log('✅ Result sent via Telegram.WebApp.sendData()');
+                console.log('📤 [SEND] Calling Telegram.WebApp.sendData()...');
                 
-                // Close the WebApp after a brief delay
-                setTimeout(() => {
-                    console.log('🚪 Closing WebApp...');
-                    this.tg.close();
-                }, 1500);
+                // Store for debugging
+                localStorage.setItem('last_send_attempt', new Date().toISOString());
+                localStorage.setItem('last_send_data', resultString);
                 
-                return; // Exit - we're done!
+                try {
+                    this.tg.sendData(resultString);
+                    console.log('✅ [SEND] sendData() called successfully');
+                    
+                    // Check if it's real Telegram or mock
+                    const isRealTelegram = !window.location.hostname.includes('localhost') && 
+                                          !window.location.hostname.includes('127.0.0.1');
+                    
+                    console.log('📤 [SEND] Environment:', isRealTelegram ? 'REAL TELEGRAM' : 'LOCAL MOCK');
+                    
+                    if (isRealTelegram) {
+                        // Real Telegram - close immediately
+                        console.log('🚪 [SEND] Closing WebApp in real Telegram...');
+                        this.tg.close();
+                    } else {
+                        // Mock - show confirmation
+                        console.log('🧪 [SEND] Mock environment - not closing');
+                        alert('✅ Result sent successfully!\n\n(Mock mode - WebApp would close in real Telegram)');
+                    }
+                    
+                    return; // Exit - we're done!
+                    
+                } catch (sendError) {
+                    console.error('❌ [SEND] sendData() threw error:', sendError);
+                    alert('ERROR calling sendData:\n\n' + sendError.message);
+                }
+                
+            } else {
+                console.error('❌ [SEND] sendData not available!');
+                console.log('Telegram object:', this.tg);
             }
             
-            // ⚠️ FALLBACK: If sendData not available (shouldn't happen)
-            console.warn('⚠️ Telegram.WebApp.sendData() not available');
-            console.log('💾 Saving to localStorage instead');
+            // ⚠️ FALLBACK: If sendData not available
+            console.warn('⚠️ [SEND] Telegram.WebApp.sendData() not available');
+            console.log('💾 [SEND] Saving to localStorage instead');
             
             // Save locally for testing/debugging
             localStorage.setItem(`game_result_${this.config.sessionId}`, resultString);
             localStorage.setItem(`game_result_latest`, resultString);
             
-            alert('Game completed!\n\nResult saved to localStorage (testing mode)');
+            alert('⚠️ sendData not available!\n\nResult saved to localStorage (testing mode)');
             
         } catch (e) {
-            console.error('❌ Error sending result:', e);
+            console.error('❌ [SEND] Error in sendResult:', e);
+            console.error('Stack:', e.stack);
             
             // Emergency fallback
             localStorage.setItem(`game_result_error_${Date.now()}`, JSON.stringify({
                 error: e.message,
+                stack: e.stack,
                 result: result
             }));
             
-            alert('Error sending result. Data saved locally for recovery.');
+            alert('❌ ERROR sending result:\n\n' + e.message + '\n\nData saved locally for recovery.');
         }
     }
     
