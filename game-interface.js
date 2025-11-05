@@ -347,6 +347,7 @@ class TelegramMiniGame {
     
     // Send result back to Telegram bot
     // Send result back to Telegram bot
+    // Send result back to Telegram bot
     sendResult(result) {
         console.log('📤 Sending result:', result);
         
@@ -357,7 +358,7 @@ class TelegramMiniGame {
         }
         
         try {
-            // ✅ IMPORTANT: Remove large/unnecessary data to fit in 4096 bytes
+            // ✅ Create compact result (remove large data)
             const compactResult = {
                 // Essential metadata
                 sessionId: result.sessionId,
@@ -394,12 +395,6 @@ class TelegramMiniGame {
                 optimal: result.optimal,
                 achievements: result.achievements || [],
                 
-                // ❌ REMOVED to save space:
-                // - milestones (can be huge!)
-                // - gameData (detailed state)
-                // - modifiers (not needed for result)
-                // - outputString (can regenerate)
-                
                 // Minimal milestone summary
                 milestoneCount: result.milestones?.count || 0
             };
@@ -411,7 +406,7 @@ class TelegramMiniGame {
             
             // Final size check
             if (resultString.length > 4096) {
-                console.error(`❌ Result still too large: ${resultString.length} bytes`);
+                console.error(`❌ Result too large: ${resultString.length} bytes`);
                 
                 // Emergency ultra-compact version
                 const ultraCompact = {
@@ -426,15 +421,8 @@ class TelegramMiniGame {
                     difficulty: result.difficulty
                 };
                 
-                const ultraString = JSON.stringify(ultraCompact);
-                console.log(`📏 Ultra-compact size: ${ultraString.length} bytes`);
-                
-                if (ultraString.length > 4096) {
-                    alert('ERROR: Cannot compress result enough!\n\nPlease report this issue.');
-                    return;
-                }
-                
-                resultString = ultraString;
+                resultString = JSON.stringify(ultraCompact);
+                console.log(`📏 Ultra-compact size: ${resultString.length} bytes`);
             }
             
             console.log(`✅ Result validated: ${resultString.length} bytes`);
@@ -448,20 +436,18 @@ class TelegramMiniGame {
                 localStorage.setItem('game_result_latest', resultString);
                 localStorage.setItem('last_send_time', new Date().toISOString());
                 
-                // Send data
+                // ✅ FIX: Just send data - DON'T call close()
+                // Telegram will close the WebApp automatically after receiving data
                 this.tg.sendData(resultString);
-                console.log('✅ Result sent via Telegram.WebApp.sendData()');
+                console.log('✅ Data sent! Telegram will close WebApp automatically.');
                 
-                // ⚠️ DON'T close immediately - let Telegram process the data first
-                setTimeout(() => {
-                    console.log('🚪 Closing WebApp...');
-                    this.tg.close();
-                }, 2000); // ✅ Increased delay to 2 seconds
+                // ❌ REMOVED: Don't call this.tg.close()
+                // The WebApp closes automatically after sendData in real Telegram
                 
                 return; // Exit - we're done!
             }
             
-            // ⚠️ FALLBACK: If sendData not available (shouldn't happen in real Telegram)
+            // ⚠️ FALLBACK: If sendData not available (testing mode)
             console.warn('⚠️ Telegram.WebApp.sendData() not available');
             console.log('💾 Saving to localStorage instead');
             

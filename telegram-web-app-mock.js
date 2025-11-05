@@ -275,6 +275,12 @@
                 // Also show the full data in console
                 console.log('Full data stored in localStorage.last_telegram_sendData');
                 
+                // ✅ SIMULATE AUTO-CLOSE after sendData (like real Telegram)
+                console.log('🚪 MOCK: Simulating auto-close (would happen in real Telegram)');
+                setTimeout(() => {
+                    console.log('✅ MOCK: WebApp would be closed now');
+                }, 500);
+                
                 return true;
             } catch (e) {
                 console.error('❌ sendData validation failed:', e);
