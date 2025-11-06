@@ -431,6 +431,11 @@ class TelegramMiniGame {
             if (this.tg && typeof this.tg.sendData === 'function') {
                 
                 console.log('📤 Calling Telegram.WebApp.sendData()...');
+
+                console.log('🔍 WebApp object:', window.Telegram.WebApp);
+                console.log('🔍 sendData function:', typeof window.Telegram.WebApp.sendData);
+                alert('About to send data: ' + JSON.stringify(result).substring(0, 100));
+                window.Telegram.WebApp.sendData(JSON.stringify(result));
                 
                 // Save to localStorage for debugging
                 localStorage.setItem('game_result_latest', resultString);
