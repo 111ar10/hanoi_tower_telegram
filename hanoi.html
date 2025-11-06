@@ -2,672 +2,156 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tower of Hanoi</title>
-    
-    <!-- ✅ Telegram WebApp SDK -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hanoi Test</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
     <style>
-        :root {
-            --primary-color: #667eea;
-            --secondary-color: #764ba2;
-            --success-color: #48bb78;
-            --warning-color: #ed8936;
-            --danger-color: #f56565;
-            
-            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --card-bg: rgba(255, 255, 255, 0.95);
-            
-            --disk-1: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --disk-2: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            --disk-3: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-            --disk-4: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-            --disk-5: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
-            --disk-6: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-            
-            --tower-pole-width: 6px;
-            --tower-base-height: 12px;
-            --disk-height: 24px;
-            --disk-spacing: 3px;
-            --tower-height: 280px;
-        }
-        
-        @media (min-width: 768px) {
-            :root {
-                --tower-pole-width: 8px;
-                --tower-base-height: 15px;
-                --disk-height: 28px;
-                --disk-spacing: 4px;
-                --tower-height: 350px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            :root {
-                --tower-pole-width: 5px;
-                --tower-base-height: 10px;
-                --disk-height: 20px;
-                --disk-spacing: 2px;
-                --tower-height: 220px;
-            }
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-gradient);
-            min-height: 100vh;
-            padding: 10px;
-            overflow-x: hidden;
-        }
-        
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            width: 100%;
-        }
-        
-        .game-header {
-            background: var(--card-bg);
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        }
-        
-        .game-title {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #667eea;
+            color: white;
             text-align: center;
-            font-size: clamp(22px, 6vw, 28px);
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 12px;
         }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-        
-        .stat-box {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
-            padding: 10px 6px;
-            border-radius: 10px;
-            text-align: center;
-            border: 2px solid rgba(102, 126, 234, 0.2);
-        }
-        
-        .stat-label {
-            font-size: clamp(9px, 2.5vw, 11px);
-            color: #666;
-            display: block;
-            margin-bottom: 4px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        
-        .stat-value {
-            font-size: clamp(16px, 5vw, 20px);
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        .timer {
-            font-size: clamp(20px, 6vw, 28px);
-            font-weight: 800;
-            text-align: center;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            padding: 8px;
-            margin-bottom: 12px;
-        }
-        
-        .game-container {
-            background: var(--card-bg);
-            border-radius: 15px;
-            padding: 15px 10px;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
-        }
-        
-        .towers-container {
-            background: linear-gradient(180deg, rgba(102, 126, 234, 0.05) 0%, transparent 100%);
-            border-radius: 12px;
-            padding: 15px 5px;
-            margin-bottom: 15px;
-            min-height: calc(var(--tower-height) + 30px);
-        }
-        
-        .towers {
-            display: flex;
-            justify-content: space-around;
-            align-items: flex-end;
-            height: var(--tower-height);
-            position: relative;
-            padding: 0 2px;
-        }
-        
-        .tower {
-            display: flex;
-            flex-direction: column-reverse;
-            align-items: center;
-            width: 32%;
-            height: 100%;
-            position: relative;
-            cursor: pointer;
-            transition: transform 0.2s;
-            touch-action: manipulation;
-        }
-        
-        .tower:active {
-            transform: scale(0.98);
-        }
-        
-        .tower-pole {
-            width: var(--tower-pole-width);
-            height: calc(100% - var(--tower-base-height));
-            background: linear-gradient(180deg, #a0aec0 0%, #4a5568 100%);
-            position: absolute;
-            bottom: var(--tower-base-height);
-            left: 50%;
-            transform: translateX(-50%);
-            border-radius: 3px;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-            z-index: 1;
-        }
-        
-        .tower-base {
-            width: 100%;
-            height: var(--tower-base-height);
-            background: linear-gradient(180deg, #4a5568, #2d3748);
-            border-radius: 4px;
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            z-index: 1;
-        }
-        
-        .disk {
-            height: var(--disk-height);
-            border-radius: 10px;
-            margin-bottom: var(--disk-spacing);
-            position: relative;
-            z-index: 10;
-            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            box-shadow: 
-                0 3px 6px rgba(0, 0, 0, 0.3),
-                inset 0 2px 4px rgba(255, 255, 255, 0.3);
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            cursor: grab;
-            touch-action: none;
-        }
-        
-        .disk:active { cursor: grabbing; }
-        
-        .disk-1 { width: 40%; min-width: 50px; max-width: 70px; background: var(--disk-1); }
-        .disk-2 { width: 55%; min-width: 70px; max-width: 90px; background: var(--disk-2); }
-        .disk-3 { width: 70%; min-width: 90px; max-width: 110px; background: var(--disk-3); }
-        .disk-4 { width: 85%; min-width: 110px; max-width: 130px; background: var(--disk-4); }
-        .disk-5 { width: 95%; min-width: 130px; max-width: 150px; background: var(--disk-5); }
-        .disk-6 { width: 98%; min-width: 150px; max-width: 170px; background: var(--disk-6); }
-        
-        .selected {
-            transform: translateY(-20px) scale(1.1);
-            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.4), 0 0 15px rgba(102, 126, 234, 0.6);
-            filter: brightness(1.2);
-            z-index: 100 !important;
-        }
-        
-        .highlight {
-            background: rgba(72, 187, 120, 0.3);
-        }
-        
-        .invalid { animation: shake 0.4s; }
-        
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
-            20%, 40%, 60%, 80% { transform: translateX(6px); }
-        }
-        
-        .controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-        
         button {
-            padding: 12px 16px;
+            padding: 20px 40px;
+            font-size: 20px;
             border: none;
             border-radius: 10px;
-            font-size: clamp(13px, 3.5vw, 15px);
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
+            background: #48bb78;
             color: white;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            touch-action: manipulation;
+            cursor: pointer;
+            margin: 20px;
         }
-        
-        button:active { transform: scale(0.95); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        
-        .btn-primary { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); }
-        .btn-secondary { background: linear-gradient(135deg, var(--warning-color), #dd6b20); }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.85);
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 20px;
-        }
-        
-        .modal.show { display: flex; }
-        
-        .modal-content {
-            background: white;
-            padding: 30px 20px;
-            border-radius: 20px;
-            text-align: center;
-            max-width: 350px;
-            width: 100%;
-            animation: slideUp 0.5s;
-        }
-        
-        @keyframes slideUp {
-            from { transform: translateY(100px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        
-        .modal h2 {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 20px;
-            font-size: clamp(24px, 7vw, 32px);
-        }
-        
-        .modal p {
-            color: #4a5568;
-            margin-bottom: 12px;
-            font-size: clamp(14px, 4vw, 16px);
-        }
-        
-        .rating {
-            font-size: clamp(60px, 15vw, 80px);
+        .info {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
             margin: 20px 0;
+            font-size: 14px;
         }
-        
-        .debug {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.9);
+        .log {
+            background: rgba(0, 0, 0, 0.8);
             color: #0f0;
-            padding: 5px;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
             font-family: monospace;
-            font-size: 10px;
-            max-height: 100px;
+            font-size: 12px;
+            text-align: left;
+            max-height: 300px;
             overflow-y: auto;
-            z-index: 3000;
-            display: none; /* Change to 'block' to debug */
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="game-header">
-            <div class="game-title">🗼 Tower of Hanoi</div>
-            
-            <div class="timer" id="timer">Ready</div>
-            
-            <div class="stats-grid">
-                <div class="stat-box">
-                    <span class="stat-label">Moves</span>
-                    <span class="stat-value" id="moves">0</span>
-                </div>
-                <div class="stat-box">
-                    <span class="stat-label">Optimal</span>
-                    <span class="stat-value" id="optimal">-</span>
-                </div>
-                <div class="stat-box">
-                    <span class="stat-label">Score</span>
-                    <span class="stat-value" id="score">0</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="game-container">
-            <div class="towers-container">
-                <div class="towers" id="towers">
-                    <div class="tower" data-tower="0">
-                        <div class="tower-pole"></div>
-                        <div class="tower-base"></div>
-                    </div>
-                    <div class="tower" data-tower="1">
-                        <div class="tower-pole"></div>
-                        <div class="tower-base"></div>
-                    </div>
-                    <div class="tower" data-tower="2">
-                        <div class="tower-pole"></div>
-                        <div class="tower-base"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="controls">
-                <button class="btn-primary" id="restartBtn">🔄 Restart</button>
-                <button class="btn-secondary" id="hintBtn">💡 Hint</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="winModal">
-        <div class="modal-content">
-            <h2>🎉 Victory!</h2>
-            <div class="rating" id="modalRating">A</div>
-            <p id="modalMoves"></p>
-            <p id="modalTime"></p>
-            <p id="modalScore"></p>
-        </div>
-    </div>
-
-    <div class="debug" id="debug"></div>
+    <h1>🗼 Hanoi Test</h1>
+    
+    <div class="info" id="info">Loading...</div>
+    
+    <button onclick="sendTestData()">📤 Send Test Result</button>
+    <button onclick="window.Telegram.WebApp.close()">❌ Close</button>
+    
+    <div class="log" id="log"></div>
 
     <script>
-        // ============================================
-        // DEBUG
-        // ============================================
-        const debugEl = document.getElementById('debug');
+        const logEl = document.getElementById('log');
+        const infoEl = document.getElementById('info');
+        
         function log(msg) {
             console.log(msg);
-            if (debugEl) {
-                debugEl.innerHTML += `<br>${msg}`;
-                debugEl.scrollTop = debugEl.scrollHeight;
-            }
+            const timestamp = new Date().toLocaleTimeString();
+            logEl.innerHTML += `<br>[${timestamp}] ${msg}`;
+            logEl.scrollTop = logEl.scrollHeight;
         }
         
         log('🚀 Starting...');
         
-        // ============================================
-        // TELEGRAM WEBAPP
-        // ============================================
-        
+        // Check Telegram
         if (!window.Telegram?.WebApp) {
-            alert('Error: Must open from Telegram');
-            throw new Error('No Telegram WebApp');
+            infoEl.innerHTML = '❌ Telegram WebApp not found!';
+            log('❌ No Telegram WebApp');
+            throw new Error('No Telegram');
         }
         
         const tg = window.Telegram.WebApp;
+        log('✅ Telegram WebApp found');
+        
+        // Initialize
         tg.ready();
         tg.expand();
-        log('✅ Telegram WebApp ready');
+        log('✅ Initialized');
         
-        // Get parameters
+        // Get URL params
         const urlParams = new URLSearchParams(window.location.search);
-        const config = {
-            sessionId: urlParams.get('sessionId'),
-            userId: urlParams.get('userId'),
-            difficulty: parseInt(urlParams.get('difficulty')) || 2,
-            timeLimit: parseInt(urlParams.get('timeLimit')) || 300
-        };
+        const sessionId = urlParams.get('sessionId');
+        const userId = urlParams.get('userId');
+        const difficulty = urlParams.get('difficulty');
         
-        log(`Session: ${config.sessionId}`);
-        log(`User: ${config.userId}`);
+        log(`Session: ${sessionId || 'MISSING'}`);
+        log(`User: ${userId || 'MISSING'}`);
+        log(`Difficulty: ${difficulty || 'MISSING'}`);
         
-        if (!config.sessionId) {
-            alert('Error: Invalid session');
-            throw new Error('No session ID');
-        }
+        // Display info
+        infoEl.innerHTML = `
+            <strong>✅ Telegram WebApp Active</strong><br>
+            Platform: ${tg.platform || 'unknown'}<br>
+            Session: ${sessionId || 'missing'}<br>
+            User: ${userId || 'missing'}<br>
+            Difficulty: ${difficulty || 'missing'}
+        `;
         
-        // ============================================
-        // GAME STATE
-        // ============================================
-        
-        const DISK_COUNT = Math.min(3 + config.difficulty, 7);
-        const OPTIMAL_MOVES = Math.pow(2, DISK_COUNT) - 1;
-        
-        let game = {
-            towers: [[], [], []],
-            selected: null,
-            moves: 0,
-            mistakes: 0,
-            hints: 0,
-            startTime: Date.now(),
-            completed: false,
-            timerInterval: null
-        };
-        
-        // Initialize first tower
-        for (let i = DISK_COUNT; i >= 1; i--) {
-            game.towers[0].push(i);
-        }
-        
-        log(`✅ Game ready: ${DISK_COUNT} disks`);
-        
-        // ============================================
-        // UI FUNCTIONS
-        // ============================================
-        
-        function updateDisplay() {
-            document.querySelectorAll('.tower').forEach((towerEl, index) => {
-                towerEl.querySelectorAll('.disk').forEach(d => d.remove());
-                
-                game.towers[index].forEach(size => {
-                    const disk = document.createElement('div');
-                    disk.className = `disk disk-${size}`;
-                    const pole = towerEl.querySelector('.tower-pole');
-                    towerEl.insertBefore(disk, pole);
-                });
-            });
+        function sendTestData() {
+            log('📤 Preparing test data...');
             
-            document.getElementById('moves').textContent = game.moves;
-            document.getElementById('score').textContent = calculateScore();
-        }
-        
-        function calculateScore() {
-            if (game.moves === 0) return 0;
-            const efficiency = Math.min(1, OPTIMAL_MOVES / game.moves);
-            return Math.floor(efficiency * 1000);
-        }
-        
-        function startTimer() {
-            const timerEl = document.getElementById('timer');
-            game.timerInterval = setInterval(() => {
-                if (game.completed) {
-                    clearInterval(game.timerInterval);
-                    return;
-                }
-                const elapsed = Math.floor((Date.now() - game.startTime) / 1000);
-                const mins = Math.floor(elapsed / 60);
-                const secs = elapsed % 60;
-                timerEl.textContent = `⏱️ ${mins}:${secs.toString().padStart(2, '0')}`;
-            }, 1000);
-        }
-        
-        // ============================================
-        // GAME LOGIC
-        // ============================================
-        
-        function canMove(from, to) {
-            if (game.towers[from].length === 0) return false;
-            if (game.towers[to].length === 0) return true;
-            return game.towers[from][game.towers[from].length - 1] < 
-                   game.towers[to][game.towers[to].length - 1];
-        }
-        
-        function selectTower(index) {
-            if (game.completed) return;
-            
-            if (game.selected === null) {
-                if (game.towers[index].length > 0) {
-                    game.selected = index;
-                    highlightDisk(index, true);
-                }
-            } else {
-                if (game.selected === index) {
-                    highlightDisk(index, false);
-                    game.selected = null;
-                } else if (canMove(game.selected, index)) {
-                    // Move disk
-                    const disk = game.towers[game.selected].pop();
-                    game.towers[index].push(disk);
-                    game.moves++;
-                    
-                    highlightDisk(game.selected, false);
-                    game.selected = null;
-                    updateDisplay();
-                    
-                    // Check win
-                    if (game.towers[2].length === DISK_COUNT) {
-                        handleWin();
-                    }
-                } else {
-                    game.mistakes++;
-                    const tower = document.querySelector(`[data-tower="${index}"]`);
-                    tower.classList.add('invalid');
-                    setTimeout(() => tower.classList.remove('invalid'), 400);
-                }
-            }
-        }
-        
-        function highlightDisk(towerIndex, highlight) {
-            const tower = document.querySelector(`[data-tower="${towerIndex}"]`);
-            const disks = Array.from(tower.querySelectorAll('.disk'));
-            const topDisk = disks[disks.length - 1];
-            if (topDisk) {
-                topDisk.classList.toggle('selected', highlight);
-            }
-        }
-        
-        function handleWin() {
-            log('🎉 Win!');
-            game.completed = true;
-            clearInterval(game.timerInterval);
-            
-            const timeElapsed = Math.floor((Date.now() - game.startTime) / 1000);
-            const score = calculateScore();
-            
-            let rating = 'F';
-            if (score >= 950) rating = 'S';
-            else if (score >= 850) rating = 'A';
-            else if (score >= 700) rating = 'B';
-            else if (score >= 500) rating = 'C';
-            else if (score >= 300) rating = 'D';
-            
-            // Show modal
-            document.getElementById('modalRating').textContent = rating;
-            document.getElementById('modalMoves').textContent = 
-                `Moves: ${game.moves} / ${OPTIMAL_MOVES}`;
-            document.getElementById('modalTime').textContent = 
-                `⏱️ ${Math.floor(timeElapsed / 60)}:${(timeElapsed % 60).toString().padStart(2, '0')}`;
-            document.getElementById('modalScore').textContent = 
-                `⭐ Score: ${score}`;
-            document.getElementById('winModal').classList.add('show');
-            
-            // Send result
-            setTimeout(() => sendResult({
-                sessionId: config.sessionId,
+            const testResult = {
+                sessionId: sessionId || 'test-session-123',
                 gameId: 'hanoi',
-                userId: config.userId,
-                score: score,
-                rating: rating,
-                moves: game.moves,
-                optimalMoves: OPTIMAL_MOVES,
-                timeElapsed: timeElapsed,
-                hintsUsed: game.hints,
-                mistakes: game.mistakes,
+                userId: userId || '123456',
+                score: 850,
+                rating: 'A',
+                moves: 15,
+                optimalMoves: 15,
+                timeElapsed: 45,
+                hintsUsed: 0,
+                mistakes: 0,
                 completed: true,
-                difficulty: config.difficulty,
-                numDisks: DISK_COUNT,
+                difficulty: parseInt(difficulty) || 2,
+                numDisks: 4,
                 timestamp: Date.now()
-            }), 2000);
-        }
-        
-        function sendResult(data) {
-            log('📤 Sending result...');
+            };
+            
+            log('📦 Test data:');
+            log(JSON.stringify(testResult, null, 2));
+            
+            const dataString = JSON.stringify(testResult);
+            log(`📏 Size: ${dataString.length} bytes`);
+            
+            if (dataString.length > 4096) {
+                log('⚠️ WARNING: Data too large!');
+                alert('Data too large! Max 4096 bytes');
+                return;
+            }
             
             try {
-                const dataString = JSON.stringify(data);
-                log(`📏 Size: ${dataString.length} bytes`);
-                
+                log('📤 Calling tg.sendData()...');
                 tg.sendData(dataString);
-                log('✅ Sent!');
+                log('✅ SENT! Check your bot...');
+                
+                alert('✅ Data sent!\n\nCheck Node-RED debug panel.\n\nWebApp will close in 3 seconds...');
                 
                 setTimeout(() => {
-                    log('Closing...');
+                    log('🔄 Closing WebApp...');
                     tg.close();
-                }, 2000);
+                }, 3000);
                 
             } catch (error) {
-                log(`❌ Error: ${error.message}`);
-                alert('Error sending result: ' + error.message);
+                log(`❌ ERROR: ${error.message}`);
+                alert('Error: ' + error.message);
             }
         }
         
-        function useHint() {
-            if (game.completed) return;
-            game.hints++;
-            alert('💡 Try moving the smallest disk!');
-        }
-        
-        function restart() {
-            clearInterval(game.timerInterval);
-            game.towers = [[], [], []];
-            for (let i = DISK_COUNT; i >= 1; i--) {
-                game.towers[0].push(i);
-            }
-            game.selected = null;
-            game.moves = 0;
-            game.mistakes = 0;
-            game.hints = 0;
-            game.startTime = Date.now();
-            game.completed = false;
-            updateDisplay();
-            startTimer();
-            document.getElementById('winModal').classList.remove('show');
-        }
-        
-        // ============================================
-        // EVENT HANDLERS
-        // ============================================
-        
-        document.querySelectorAll('.tower').forEach((tower, index) => {
-            tower.addEventListener('click', () => selectTower(index));
-        });
-        
-        document.getElementById('restartBtn').addEventListener('click', restart);
-        document.getElementById('hintBtn').addEventListener('click', useHint);
-        
-        // ============================================
-        // INITIALIZE
-        // ============================================
-        
-        document.getElementById('optimal').textContent = OPTIMAL_MOVES;
-        updateDisplay();
-        startTimer();
-        log('✅ Game started!');
+        log('✅ Ready! Click "Send Test Result" button');
     </script>
 </body>
 </html>
