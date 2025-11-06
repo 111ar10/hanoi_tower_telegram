@@ -3,189 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hanoi Test</title>
+    <title>Tower of Hanoi</title>
     
     <!-- ✅ Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background: #667eea;
-            color: white;
-        }
+        /* ... keep all your existing CSS ... */
         
-        .log {
-            background: rgba(0, 0, 0, 0.8);
+        /* Just add this at the end of your CSS */
+        .debug-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.9);
             color: #0f0;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 10px 0;
+            padding: 10px;
             font-family: monospace;
-            font-size: 12px;
-            max-height: 300px;
+            font-size: 10px;
+            max-height: 150px;
             overflow-y: auto;
-        }
-        
-        button {
-            padding: 15px 30px;
-            font-size: 18px;
-            border: none;
-            border-radius: 10px;
-            background: #48bb78;
-            color: white;
-            cursor: pointer;
-            margin: 10px;
-        }
-        
-        button:active {
-            transform: scale(0.95);
-        }
-        
-        .info {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 15px;
-            border-radius: 10px;
-            margin: 10px 0;
+            z-index: 3000;
+            display: none; /* Change to 'block' to show debug */
         }
     </style>
 </head>
 <body>
-    <h1>🗼 Hanoi - Debug Mode</h1>
+    <!-- Keep all your existing HTML -->
     
-    <div class="info" id="info">
-        <strong>Checking Telegram WebApp...</strong>
-    </div>
-    
-    <div class="log" id="log">
-        <strong>📋 Debug Log:</strong><br>
-    </div>
-    
-    <button id="testBtn">🎮 Test Send Data</button>
-    <button id="closeBtn">❌ Close WebApp</button>
+    <!-- Add debug panel at the end of body -->
+    <div class="debug-panel" id="debugPanel"></div>
     
     <script>
-        const logEl = document.getElementById('log');
-        const infoEl = document.getElementById('info');
+        // ============================================
+        // DEBUG LOGGER
+        // ============================================
+        const debugPanel = document.getElementById('debugPanel');
+        const DEBUG_MODE = true; // Set to false in production
         
-        function log(msg, type = 'info') {
+        function debugLog(msg, type = 'info') {
             const timestamp = new Date().toLocaleTimeString();
             const prefix = {
                 'info': 'ℹ️',
                 'success': '✅',
                 'error': '❌',
-                'warning': '⚠️'
+                'warn': '⚠️'
             }[type] || 'ℹ️';
             
             console.log(`[${timestamp}] ${msg}`);
-            logEl.innerHTML += `<br>${prefix} [${timestamp}] ${msg}`;
-            logEl.scrollTop = logEl.scrollHeight;
-        }
-        
-        // Initialize
-        log('🚀 Script started');
-        
-        // Check Telegram WebApp
-        if (!window.Telegram) {
-            log('❌ window.Telegram NOT FOUND', 'error');
-            infoEl.innerHTML = '<strong style="color: #f56565;">❌ Telegram SDK not loaded!</strong>';
-        } else {
-            log('✅ window.Telegram found', 'success');
             
-            const tg = window.Telegram.WebApp;
-            
-            if (!tg) {
-                log('❌ Telegram.WebApp NOT FOUND', 'error');
-                infoEl.innerHTML = '<strong style="color: #f56565;">❌ Telegram WebApp not available!</strong>';
-            } else {
-                log('✅ Telegram WebApp found', 'success');
-                
-                // Initialize
-                try {
-                    tg.ready();
-                    log('✅ tg.ready() called', 'success');
-                    
-                    tg.expand();
-                    log('✅ tg.expand() called', 'success');
-                    
-                    tg.enableClosingConfirmation();
-                    log('✅ tg.enableClosingConfirmation() called', 'success');
-                } catch (e) {
-                    log(`❌ Init error: ${e.message}`, 'error');
-                }
-                
-                // Get URL params
-                const urlParams = new URLSearchParams(window.location.search);
-                const sessionId = urlParams.get('sessionId');
-                const userId = urlParams.get('userId');
-                const difficulty = urlParams.get('difficulty');
-                
-                log(`📍 Session ID: ${sessionId || 'NOT FOUND'}`, sessionId ? 'success' : 'error');
-                log(`📍 User ID: ${userId || 'NOT FOUND'}`, userId ? 'success' : 'error');
-                log(`📍 Difficulty: ${difficulty || 'NOT FOUND'}`, difficulty ? 'success' : 'error');
-                
-                // Display info
-                infoEl.innerHTML = `
-                    <strong>✅ Telegram WebApp Active</strong><br>
-                    <small>
-                    Version: ${tg.version || 'unknown'}<br>
-                    Platform: ${tg.platform || 'unknown'}<br>
-                    Session ID: ${sessionId || 'missing'}<br>
-                    User ID: ${userId || 'missing'}
-                    </small>
-                `;
-                
-                // Test button
-                document.getElementById('testBtn').addEventListener('click', () => {
-                    log('🎯 Test button clicked', 'info');
-                    
-                    const testData = {
-                        sessionId: sessionId || 'test-session-123',
-                        gameId: 'hanoi',
-                        userId: userId || 'test-user',
-                        score: 85,
-                        rating: 'A',
-                        moves: 15,
-                        timeElapsed: 45,
-                        completed: true,
-                        timestamp: Date.now()
-                    };
-                    
-                    log('📦 Preparing data...', 'info');
-                    log(`Data: ${JSON.stringify(testData)}`, 'info');
-                    
-                    const dataString = JSON.stringify(testData);
-                    log(`📏 Data size: ${dataString.length} bytes`, 'info');
-                    
-                    try {
-                        log('📤 Calling tg.sendData()...', 'warning');
-                        tg.sendData(dataString);
-                        log('✅ tg.sendData() called successfully!', 'success');
-                        log('⏳ WebApp should close automatically...', 'info');
-                        
-                        // Fallback close after 2 seconds
-                        setTimeout(() => {
-                            log('🔄 Calling tg.close()...', 'info');
-                            tg.close();
-                        }, 2000);
-                        
-                    } catch (e) {
-                        log(`❌ sendData error: ${e.message}`, 'error');
-                        log(`Stack: ${e.stack}`, 'error');
-                    }
-                });
-                
-                // Close button
-                document.getElementById('closeBtn').addEventListener('click', () => {
-                    log('🔄 Closing WebApp...', 'info');
-                    tg.close();
-                });
-                
-                log('✅ All event handlers attached', 'success');
-                log('👍 Ready to test!', 'success');
+            if (DEBUG_MODE && debugPanel) {
+                debugPanel.innerHTML += `<br>${prefix} ${timestamp} ${msg}`;
+                debugPanel.scrollTop = debugPanel.scrollHeight;
             }
         }
+        
+        // ============================================
+        // TELEGRAM WEBAPP INITIALIZATION
+        // ============================================
+        
+        debugLog('🚀 Script starting...');
+        
+        // Check Telegram WebApp
+        if (!window.Telegram?.WebApp) {
+            debugLog('❌ Telegram WebApp not available!', 'error');
+            alert('Error: This game must be opened from Telegram');
+            throw new Error('Telegram WebApp not available');
+        }
+        
+        const tg = window.Telegram.WebApp;
+        debugLog('✅ Telegram WebApp found', 'success');
+        
+        // Initialize
+        tg.ready();
+        tg.expand();
+        tg.enableClosingConfirmation();
+        debugLog('✅ Telegram WebApp initialized', 'success');
+        
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const gameConfig = {
+            sessionId: urlParams.get('sessionId'),
+            userId: urlParams.get('userId'),
+            difficulty: parseInt(urlParams.get('difficulty')) || 2,
+            timeLimit: parseInt(urlParams.get('timeLimit')) || 300,
+            minScore: parseInt(urlParams.get('minScore')) || 0,
+            lang: urlParams.get('lang') || 'en'
+        };
+        
+        debugLog(`📍 Session: ${gameConfig.sessionId}`, 'success');
+        debugLog(`👤 User: ${gameConfig.userId}`, 'success');
+        debugLog(`🎯 Difficulty: ${gameConfig.difficulty}`, 'success');
+        
+        if (!gameConfig.sessionId) {
+            debugLog('❌ No session ID!', 'error');
+            alert('Error: Invalid game session');
+            throw new Error('No session ID');
+        }
+        
+        // ============================================
+        // GAME STATE
+        // ============================================
+        
+        const DISK_COUNT = Math.min(3 + gameConfig.difficulty, 7);
+        const OPTIMAL_MOVES = Math.pow(2, DISK_COUNT) - 1;
+        
+        let gameState = {
+            towers: [[], [], []],
+            selectedTower: null,
+            moves: 0,
+            mistakes: 0,
+            hintsUsed: 0,
+            startTime: Date.now(),
+            completed: false
+        };
+        
+        // Initialize first tower with disks
+        for (let i = DISK_COUNT; i >= 1; i--) {
+            gameState.towers[0].push(i);
+        }
+        
+        debugLog(`🎮 Game initialized: ${DISK_COUNT} disks`, 'success');
+        
+        // ============================================
+        // GAME LOGIC (Keep your existing functions)
+        // ============================================
+        
+        // ... keep all your existing game functions ...
+        // renderGame(), selectTower(), moveDisk(), etc.
+        
+        // ============================================
+        // GAME COMPLETION
+        // ============================================
+        
+        function checkWin() {
+            return gameState.towers[2].length === DISK_COUNT;
+        }
+        
+        function handleGameComplete() {
+            debugLog('🎉 Game completed!', 'success');
+            
+            gameState.completed = true;
+            const timeElapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
+            
+            // Calculate score
+            const efficiency = Math.min(1, OPTIMAL_MOVES / gameState.moves);
+            const timeBonus = gameConfig.timeLimit ? 
+                Math.max(0, gameConfig.timeLimit - timeElapsed) * 10 : 0;
+            
+            const score = Math.max(0, Math.floor(
+                (efficiency * 1000) + timeBonus - 
+                (gameState.mistakes * 50) - 
+                (gameState.hintsUsed * 100)
+            ));
+            
+            // Calculate rating
+            let rating = 'F';
+            if (score >= 950) rating = 'S';
+            else if (score >= 850) rating = 'A';
+            else if (score >= 700) rating = 'B';
+            else if (score >= 500) rating = 'C';
+            else if (score >= 300) rating = 'D';
+            
+            debugLog(`Score: ${score}, Rating: ${rating}`, 'success');
+            
+            // Prepare result data
+            const resultData = {
+                sessionId: gameConfig.sessionId,
+                gameId: 'hanoi',
+                userId: gameConfig.userId,
+                score: score,
+                rating: rating,
+                moves: gameState.moves,
+                optimalMoves: OPTIMAL_MOVES,
+                timeElapsed: timeElapsed,
+                hintsUsed: gameState.hintsUsed,
+                mistakes: gameState.mistakes,
+                completed: true,
+                difficulty: gameConfig.difficulty,
+                numDisks: DISK_COUNT,
+                timestamp: Date.now()
+            };
+            
+            debugLog('📦 Sending result...', 'info');
+            sendResultToBot(resultData);
+        }
+        
+        // ============================================
+        // SEND RESULT TO BOT
+        // ============================================
+        
+        function sendResultToBot(resultData) {
+            debugLog('📤 Preparing to send data...', 'info');
+            
+            try {
+                const dataString = JSON.stringify(resultData);
+                debugLog(`📏 Data size: ${dataString.length} bytes`, 'info');
+                
+                if (dataString.length > 4096) {
+                    debugLog('⚠️ Data too large!', 'warn');
+                    // Trim if needed
+                    delete resultData.towers;
+                    const newString = JSON.stringify(resultData);
+                    debugLog(`📏 Trimmed to: ${newString.length} bytes`, 'info');
+                }
+                
+                debugLog('📤 Calling tg.sendData()...', 'info');
+                tg.sendData(JSON.stringify(resultData));
+                debugLog('✅ Data sent!', 'success');
+                
+                // Show success message
+                alert(`🎉 Completed!\n\nScore: ${resultData.score}\nRating: ${resultData.rating}\n\nResult sent to bot!`);
+                
+                // Close after short delay
+                setTimeout(() => {
+                    debugLog('🔄 Closing WebApp...', 'info');
+                    tg.close();
+                }, 2000);
+                
+            } catch (error) {
+                debugLog(`❌ Send failed: ${error.message}`, 'error');
+                alert('Error sending result: ' + error.message);
+                console.error('Send error:', error);
+            }
+        }
+        
+        // ============================================
+        // HOOK INTO YOUR EXISTING GAME
+        // ============================================
+        
+        // Modify your existing win detection to call handleGameComplete()
+        // For example, after a successful move:
+        
+        function onDiskMoved(from, to) {
+            // ... your existing move logic ...
+            
+            if (checkWin()) {
+                handleGameComplete();
+            }
+        }
+        
+        // ============================================
+        // INITIALIZE GAME
+        // ============================================
+        
+        // Call your existing game initialization
+        // renderGame();
+        // startTimer();
+        // etc.
+        
+        debugLog('✅ All systems ready!', 'success');
     </script>
 </body>
 </html>
