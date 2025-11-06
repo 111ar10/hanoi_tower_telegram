@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hanoi Test</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 400px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+        h1 { margin: 0 0 20px 0; }
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            border: none;
+            border-radius: 10px;
+            background: #48bb78;
+            color: white;
+            cursor: pointer;
+            margin: 10px;
+            min-width: 200px;
+        }
+        button:active { transform: scale(0.95); }
+        .info {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 14px;
+            text-align: left;
+        }
+        .log {
+            background: rgba(0, 0, 0, 0.8);
+            color: #0f0;
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 11px;
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .success { color: #48bb78; }
+        .error { color: #f56565; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗼 Hanoi Test</h1>
+        
+        <div class="info" id="info">Initializing...</div>
+        
+        <button onclick="sendTestResult()">📤 Send Test Result</button>
+        <button onclick="tg.close()">❌ Close</button>
+        
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        const logEl = document.getElementById('log');
+        const infoEl = document.getElementById('info');
+        
+        function log(msg, type = 'info') {
+            const time = new Date().toLocaleTimeString();
+            console.log(`[${time}] ${msg}`);
+            
+            const color = type === 'error' ? 'error' : type === 'success' ? 'success' : '';
+            logEl.innerHTML += `<div class="${color}">[${time}] ${msg}</div>`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+        
+        // Check Telegram
+        if (!window.Telegram?.WebApp) {
+            infoEl.innerHTML = '<span class="error">❌ Telegram WebApp not available</span>';
+            log('ERROR: No Telegram WebApp', 'error');
+            throw new Error('No Telegram WebApp');
+        }
+        
+        const tg = window.Telegram.WebApp;
+        log('✅ Telegram WebApp found', 'success');
+        
+        // Initialize
+        tg.ready();
+        tg.expand();
+        log('✅ Initialized', 'success');
+        
+        // Get params
+        const params = new URLSearchParams(window.location.search);
+        const config = {
+            sessionId: params.get('sessionId'),
+            userId: params.get('userId'),
+            difficulty: params.get('difficulty') || '1'
+        };
+        
+        log(`Session: ${config.sessionId}`);
+        log(`User: ${config.userId}`);
+        
+        // Display info
+        infoEl.innerHTML = `
+            <div><strong>✅ Ready to Test</strong></div>
+            <div>Session: ${config.sessionId}</div>
+            <div>User: ${config.userId}</div>
+            <div>Platform: ${tg.platform || 'unknown'}</div>
+        `;
+        
+        function sendTestResult() {
+            log('📤 Preparing data...', 'info');
+            
+            const result = {
+                sessionId: config.sessionId,
+                gameId: 'hanoi_test',
+                userId: config.userId,
+                score: 850,
+                rating: 'A',
+                moves: 15,
+                optimalMoves: 15,
+                timeElapsed: 45,
+                hintsUsed: 0,
+                mistakes: 0,
+                completed: true,
+                difficulty: parseInt(config.difficulty),
+                numDisks: 4,
+                timestamp: Date.now()
+            };
+            
+            log('Data prepared:', 'success');
+            log(JSON.stringify(result, null, 2));
+            
+            const dataString = JSON.stringify(result);
+            log(`Size: ${dataString.length} bytes`);
+            
+            if (dataString.length > 4096) {
+                log('ERROR: Data too large!', 'error');
+                alert('Data too large!');
+                return;
+            }
+            
+            try {
+                log('📤 Calling tg.sendData()...', 'info');
+                tg.sendData(dataString);
+                log('✅ Data sent!', 'success');
+                
+                alert('✅ Data sent!\n\nCheck your bot!\n\nClosing in 2 seconds...');
+                
+                setTimeout(() => {
+                    log('Closing WebApp...');
+                    tg.close();
+                }, 2000);
+                
+            } catch (error) {
+                log(`ERROR: ${error.message}`, 'error');
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        log('✅ Ready! Click button to test.', 'success');
+    </script>
+</body>
+</html>
