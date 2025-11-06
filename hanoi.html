@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tower of Hanoi</title>
     
-    <!-- Load dependencies BEFORE any other scripts -->
+    <!-- ✅ CRITICAL: Load Telegram WebApp SDK FIRST -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- Load your game dependencies -->
     <script src="telegram-web-app-mock.js"></script>
     <script src="game-interface.js"></script>
     
@@ -597,7 +600,7 @@
         }
         
         /* ========================================== */
-        /* 🆕 SENDING OVERLAY - NEW */
+        /* 🆕 SENDING OVERLAY */
         /* ========================================== */
         .sending-overlay {
             position: fixed;
@@ -771,7 +774,7 @@
         </div>
     </div>
 
-    <!-- 🆕 NEW: Sending overlay -->
+    <!-- 🆕 SENDING OVERLAY -->
     <div class="sending-overlay" id="sendingOverlay">
         <h2>📤 Sending Result...</h2>
         <p>Please wait</p>
@@ -780,21 +783,34 @@
 
     <script>
         console.log('🎮 Hanoi Game Starting...');
-        console.log('Telegram:', window.Telegram ? '✅' : '❌');
+        
+        // ✅ Check if Telegram WebApp is available
+        const tg = window.Telegram?.WebApp;
+        const hasTelegramWebApp = !!tg;
+        
+        console.log('Telegram WebApp:', hasTelegramWebApp ? '✅' : '❌');
         console.log('TelegramMiniGame:', window.TelegramMiniGame ? '✅' : '❌');
 
+        // ✅ Initialize Telegram WebApp
+        if (hasTelegramWebApp) {
+            tg.ready();
+            tg.expand();
+            tg.enableClosingConfirmation();
+            console.log('✅ Telegram WebApp initialized');
+        }
+
         // Check dependencies
-        if (!window.Telegram || !window.TelegramMiniGame) {
+        if (!window.TelegramMiniGame) {
             document.getElementById('app').innerHTML = `
                 <div class="error">
                     <h2>❌ Error Loading Game</h2>
                     <p>Missing dependencies:</p>
-                    <p>${!window.Telegram ? '❌ telegram-web-app-mock.js' : '✅ Telegram OK'}</p>
+                    <p>${!hasTelegramWebApp ? '⚠️ Telegram WebApp (will use mock)' : '✅ Telegram OK'}</p>
                     <p>${!window.TelegramMiniGame ? '❌ game-interface.js' : '✅ Framework OK'}</p>
                     <p><small>Check browser console for details</small></p>
                 </div>
             `;
-            throw new Error('Missing dependencies');
+            throw new Error('Missing game-interface.js');
         }
 
         // ============================================
@@ -869,98 +885,6 @@
                 try_again: "Попробуй ещё!",
                 ready: "Готов",
                 no_limit: "Без ограничений"
-            },
-            fr: {
-                game_title: "Tour de Hanoï",
-                difficulty: "Difficulté",
-                easy: "Facile",
-                medium: "Moyen",
-                hard: "Difficile",
-                expert: "Expert",
-                moves: "Mouvements",
-                optimal: "Optimal",
-                hints: "Indices",
-                score: "Score",
-                restart: "Recommencer",
-                hint: "Indice",
-                no_hints: "Pas d'indices",
-                victory: "Victoire!",
-                time_up: "Temps écoulé!",
-                play_again: "Rejouer",
-                perfect: "PARFAIT!",
-                great_job: "Bon travail!",
-                try_again: "Réessayer!",
-                ready: "Prêt",
-                no_limit: "Sans limite"
-            },
-            de: {
-                game_title: "Türme von Hanoi",
-                difficulty: "Schwierigkeit",
-                easy: "Einfach",
-                medium: "Mittel",
-                hard: "Schwer",
-                expert: "Experte",
-                moves: "Züge",
-                optimal: "Optimal",
-                hints: "Hinweise",
-                score: "Punktzahl",
-                restart: "Neustart",
-                hint: "Hinweis",
-                no_hints: "Keine Hinweise",
-                victory: "Sieg!",
-                time_up: "Zeit abgelaufen!",
-                play_again: "Nochmal spielen",
-                perfect: "PERFEKT!",
-                great_job: "Gut gemacht!",
-                try_again: "Nochmal versuchen!",
-                ready: "Bereit",
-                no_limit: "Keine Begrenzung"
-            },
-            pt: {
-                game_title: "Torre de Hanói",
-                difficulty: "Dificuldade",
-                easy: "Fácil",
-                medium: "Médio",
-                hard: "Difícil",
-                expert: "Especialista",
-                moves: "Movimentos",
-                optimal: "Ótimo",
-                hints: "Dicas",
-                score: "Pontuação",
-                restart: "Reiniciar",
-                hint: "Dica",
-                no_hints: "Sem dicas",
-                victory: "Vitória!",
-                time_up: "Tempo esgotado!",
-                play_again: "Jogar novamente",
-                perfect: "PERFEITO!",
-                great_job: "Bom trabalho!",
-                try_again: "Tente novamente!",
-                ready: "Pronto",
-                no_limit: "Sem limite"
-            },
-            it: {
-                game_title: "Torre di Hanoi",
-                difficulty: "Difficoltà",
-                easy: "Facile",
-                medium: "Medio",
-                hard: "Difficile",
-                expert: "Esperto",
-                moves: "Mosse",
-                optimal: "Ottimale",
-                hints: "Suggerimenti",
-                score: "Punteggio",
-                restart: "Ricomincia",
-                hint: "Suggerimento",
-                no_hints: "Nessun suggerimento",
-                victory: "Vittoria!",
-                time_up: "Tempo scaduto!",
-                play_again: "Gioca ancora",
-                perfect: "PERFETTO!",
-                great_job: "Ottimo lavoro!",
-                try_again: "Riprova!",
-                ready: "Pronto",
-                no_limit: "Senza limite"
             }
         };
 
@@ -1010,10 +934,10 @@
                     <strong>⚙️ Configuration:</strong><br>
                     Difficulty: ${this.config.difficulty} | 
                     Disks: ${this.config.custom.numDisks} | 
-                    Time: ${this.config.timeLimit || '∞'}s (×${this.config.timeModifier})<br>
+                    Time: ${this.config.timeLimit || '∞'}s<br>
                     Hints: ${this.config.hintsCount} | 
                     Language: ${this.config.language} | 
-                    Session: ${this.config.sessionId}
+                    Session: ${this.config.sessionId.substring(0, 8)}...
                 `;
             }
 
@@ -1021,7 +945,6 @@
                 const diskMap = { 1: 3, 2: 4, 3: 5, 4: 6 };
                 this.config.custom.numDisks = diskMap[this.config.difficulty] || 3;
                 
-                // Use translations for difficulty names
                 const diffNames = [
                     this.t('easy'),
                     this.t('medium'),
@@ -1049,11 +972,9 @@
                 this.state.hintsUsed = 0;
                 this.state.score = 0;
                 
-                // 📍 MILESTONE: Game start
                 this.recordMilestone('game_start', {
                     difficulty: this.config.difficulty,
-                    numDisks: this.config.custom.numDisks,
-                    timeLimit: this.config.timeLimit
+                    numDisks: this.config.custom.numDisks
                 });
                 
                 this.updateDisplay();
@@ -1068,7 +989,6 @@
                 const hintBtn = document.getElementById('hintBtn');
                 hintBtn.disabled = this.config.hintsCount === 0;
                 
-                // Use translation for button text
                 const hintText = this.config.hintsCount === 0 ? this.t('no_hints') : this.t('hint');
                 hintBtn.querySelector('span').textContent = hintText;
                 
@@ -1102,10 +1022,9 @@
                 }, 1000);
             }
 
-            // Override captureGameState for Hanoi-specific milestone data
             captureGameState() {
                 return {
-                    towers: JSON.parse(JSON.stringify(this.towers)), // Deep copy
+                    towers: JSON.parse(JSON.stringify(this.towers)),
                     selectedTower: this.selectedTower,
                     numDisks: this.config.custom.numDisks,
                     disksOnTarget: this.towers[2].length
@@ -1123,7 +1042,7 @@
                         this.highlightDisk(index, true);
                         this.highlightValidTargets();
                         
-                        if (this.config.hapticsEnabled) {
+                        if (this.config.hapticsEnabled && hasTelegramWebApp) {
                             this.tg.HapticFeedback.selectionChanged();
                         }
                     }
@@ -1136,7 +1055,7 @@
                         this.updateStats();
                         this.deselectTower();
                         
-                        if (this.config.hapticsEnabled) {
+                        if (this.config.hapticsEnabled && hasTelegramWebApp) {
                             this.tg.HapticFeedback.impactOccurred('light');
                         }
                         
@@ -1149,7 +1068,7 @@
                         tower.classList.add('invalid');
                         setTimeout(() => tower.classList.remove('invalid'), 400);
                         
-                        if (this.config.hapticsEnabled) {
+                        if (this.config.hapticsEnabled && hasTelegramWebApp) {
                             this.tg.HapticFeedback.notificationOccurred('error');
                         }
                     }
@@ -1177,23 +1096,19 @@
                 this.updateDisplay();
                 this.sendEvent('disk_moved', { from, to, disk, moves: this.state.moves });
                 
-                // 📍 MILESTONES: Progress checkpoints
                 const progress = this.towers[2].length / this.config.custom.numDisks;
                 
                 if (progress === 0.25 && !this.milestones.find(m => m.name === 'quarter_complete')) {
                     this.recordMilestone('quarter_complete', {
-                        disksOnTarget: this.towers[2].length,
-                        totalDisks: this.config.custom.numDisks
+                        disksOnTarget: this.towers[2].length
                     });
                 } else if (progress === 0.5 && !this.milestones.find(m => m.name === 'half_complete')) {
                     this.recordMilestone('half_complete', {
-                        disksOnTarget: this.towers[2].length,
-                        totalDisks: this.config.custom.numDisks
+                        disksOnTarget: this.towers[2].length
                     });
                 } else if (progress === 0.75 && !this.milestones.find(m => m.name === 'three_quarters_complete')) {
                     this.recordMilestone('three_quarters_complete', {
-                        disksOnTarget: this.towers[2].length,
-                        totalDisks: this.config.custom.numDisks
+                        disksOnTarget: this.towers[2].length
                     });
                 }
             }
@@ -1242,11 +1157,9 @@
                 
                 this.state.hintsUsed++;
                 
-                // 📍 MILESTONE: Hint used
                 this.recordMilestone('hint_used', {
                     hintNumber: this.state.hintsUsed,
-                    hintsRemaining: this.config.hintsCount - this.state.hintsUsed,
-                    currentMoves: this.state.moves
+                    hintsRemaining: this.config.hintsCount - this.state.hintsUsed
                 });
                 
                 document.getElementById('hints').textContent = this.config.hintsCount - this.state.hintsUsed;
@@ -1277,13 +1190,10 @@
                 const won = this.towers[2].length === this.config.custom.numDisks;
                 
                 if (won) {
-                    // 📍 MILESTONE: Victory
                     const optimal = Math.pow(2, this.config.custom.numDisks) - 1;
                     this.recordMilestone('victory', {
                         moves: this.state.moves,
                         optimal: optimal,
-                        mistakes: this.state.mistakes,
-                        hintsUsed: this.state.hintsUsed,
                         isPerfect: this.state.moves === optimal && this.state.mistakes === 0
                     });
                 }
@@ -1307,20 +1217,19 @@
             
                 const result = this.end(success);
                 
-                // ✅ DEBUG: Check result size BEFORE sending
+                // ✅ CRITICAL: Limit result size to fit Telegram's 4096 byte limit
                 const resultString = JSON.stringify(result);
                 console.log('📏 Result size:', resultString.length, 'bytes (limit: 4096)');
                 
-                if (resultString.length > 4096) {
-                    alert(`⚠️ RESULT TOO LARGE!\n\nSize: ${resultString.length} bytes\nLimit: 4096 bytes\n\nRemoving milestones...`);
-                    
-                    // Remove large data
-                    result.milestones = null;
-                    result.gameData = null;
+                if (resultString.length > 3500) {
+                    console.warn('⚠️ Result too large, trimming milestones...');
+                    // Keep only essential milestones
+                    result.milestones = result.milestones ? 
+                        result.milestones.filter(m => ['game_start', 'victory'].includes(m.name)) : [];
+                    result.gameData = null; // Remove tower state history
                     
                     const newSize = JSON.stringify(result).length;
-                    console.log('📏 New size:', newSize, 'bytes');
-                    alert(`✅ Reduced to: ${newSize} bytes`);
+                    console.log('📏 Trimmed size:', newSize, 'bytes');
                 }
                 
                 this.showResultModal(result);
@@ -1329,7 +1238,6 @@
             showResultModal(result) {
                 const optimal = Math.pow(2, this.config.custom.numDisks) - 1;
                 
-                // Use translations
                 document.getElementById('modalTitle').textContent = 
                     result.success ? `🎉 ${this.t('victory')}` : `⏰ ${this.t('time_up')}`;
                 
@@ -1389,14 +1297,13 @@
                 return {
                     numDisks: this.config.custom.numDisks,
                     optimal: Math.pow(2, this.config.custom.numDisks) - 1,
-                    towers: this.towers,
                     efficiency: Math.min(1, Math.pow(2, this.config.custom.numDisks) - 1 / this.state.moves)
                 };
             }
 
-            // 🆕 NEW: Override sendResult to show visual feedback
+            // ✅ Override sendResult to show visual feedback and use Telegram WebApp
             sendResult(result) {
-                console.log('📤 Hanoi: Sending result...');
+                console.log('📤 Hanoi: Sending result via Telegram WebApp...');
                 
                 // Show sending overlay
                 const overlay = document.getElementById('sendingOverlay');
@@ -1406,11 +1313,21 @@
                 
                 // Small delay for visual feedback
                 setTimeout(() => {
-                    // Call parent class sendResult (uses Telegram.WebApp.sendData)
-                    super.sendResult(result);
-                    
-                    // Note: overlay will disappear when WebApp closes automatically
-                    // No need to manually hide it
+                    try {
+                        // ✅ Use Telegram WebApp to send data
+                        if (hasTelegramWebApp) {
+                            const dataString = JSON.stringify(result);
+                            console.log('📤 Sending data:', dataString.substring(0, 100) + '...');
+                            tg.sendData(dataString);
+                            console.log('✅ Data sent successfully!');
+                        } else {
+                            console.warn('⚠️ No Telegram WebApp, using fallback');
+                            super.sendResult(result); // Use mock fallback
+                        }
+                    } catch (error) {
+                        console.error('❌ Failed to send data:', error);
+                        alert('Error sending result: ' + error.message);
+                    }
                 }, 300);
             }
         }
