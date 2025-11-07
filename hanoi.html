@@ -607,6 +607,29 @@
         // Game State
         class HanoiGame {
             constructor() {
+                console.log('🏗️ Creating HanoiGame...');
+                
+                // ✅ Extract sessionId from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                this.sessionId = urlParams.get('sessionId');
+                this.userId = urlParams.get('userId');
+                this.difficulty = parseInt(urlParams.get('difficulty')) || 2;
+                this.timeLimit = parseInt(urlParams.get('timeLimit')) || 0;
+                this.minScore = parseInt(urlParams.get('minScore')) || 0;
+                
+                // ✅ DEBUG: Log extracted params
+                console.log('📊 Game Config:', {
+                    sessionId: this.sessionId,
+                    userId: this.userId,
+                    difficulty: this.difficulty,
+                    timeLimit: this.timeLimit
+                });
+                
+                if (!this.sessionId) {
+                    console.error('❌ No sessionId in URL!');
+                    alert('Error: Missing session ID. Please restart the game from the bot.');
+                }
+
                 this.config = DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG[2];
                 this.numDisks = this.config.disks;
                 this.timeLimit = timeLimit;
@@ -885,6 +908,11 @@
                 const optimal = Math.pow(2, this.numDisks) - 1;
                 
                 const result = {
+                    // ✅ CRITICAL: Include sessionId
+                    sessionId: this.sessionId,
+                    userId: this.userId,
+                    
+                    // Game result
                     success: this.towers[2].length === this.numDisks,
                     score: this.score,
                     moves: this.moves,
@@ -893,7 +921,7 @@
                     hintsUsed: this.hintsUsed,
                     time: elapsed,
                     timeLimit: this.timeLimit,
-                    difficulty: difficulty,
+                    difficulty: this.difficulty,
                     numDisks: this.numDisks,
                     rating: this.calculateRating(optimal),
                     timestamp: Date.now()
@@ -909,7 +937,6 @@
                     try {
                         tg.sendData(JSON.stringify(result));
                         console.log('✅ Data sent successfully');
-                        // WebApp will close automatically
                     } catch (error) {
                         console.error('❌ Error sending data:', error);
                         document.getElementById('sendingOverlay').classList.remove('show');
