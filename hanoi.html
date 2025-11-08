@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tower of Hanoi</title>
-    
+
     <!-- Telegram Web App Script -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
+
     <style>
         :root {
             --primary-color: #667eea;
@@ -330,7 +330,7 @@
         
         .controls {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 10px;
         }
         
@@ -496,7 +496,7 @@
         <div class="game-header">
             <div class="game-title">🗼 Tower of Hanoi</div>
             <div class="difficulty-badge" id="difficultyBadge">Medium (4 disks)</div>
-            
+
             <div class="timer" id="timer">Ready</div>
             
             <div class="stats-grid">
@@ -540,9 +540,6 @@
             </div>
 
             <div class="controls">
-                <button class="btn-primary" id="restartBtn">
-                    🔄 Restart
-                </button>
                 <button class="btn-secondary" id="hintBtn">
                     💡 Hint
                 </button>
@@ -560,11 +557,8 @@
             <p id="modalScore"></p>
             <p id="modalMessage"></p>
             <div class="modal-buttons">
-                <button class="btn-success" id="sendResultBtn">
-                    📤 Send Result
-                </button>
-                <button class="btn-primary" id="playAgainBtn">
-                    🎮 Play Again
+                <button class="btn-primary" id="okBtn">
+                    ✅ OK
                 </button>
             </div>
         </div>
@@ -719,10 +713,8 @@
                     tower.addEventListener('click', () => this.selectTower(index));
                 });
                 
-                document.getElementById('restartBtn').addEventListener('click', () => this.restart());
                 document.getElementById('hintBtn').addEventListener('click', () => this.useHint());
-                document.getElementById('sendResultBtn').addEventListener('click', () => this.sendToBot());
-                document.getElementById('playAgainBtn').addEventListener('click', () => this.closeModal());
+                document.getElementById('okBtn').addEventListener('click', () => this.closeApp());
             }
             
             selectTower(index) {
@@ -860,7 +852,8 @@
                     (this.hintsUsed * 100)
                 ));
                 
-                this.showResultModal(success, elapsed, optimal);
+                // Automatically send result to bot
+                this.sendToBot(success, elapsed, optimal);
             }
             
             showResultModal(success, elapsed, optimal) {
@@ -903,17 +896,14 @@
                 return `${mins}:${secs.toString().padStart(2, '0')}`;
             }
             
-            sendToBot() {
-                const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
-                const optimal = Math.pow(2, this.numDisks) - 1;
-                
+            sendToBot(success, elapsed, optimal) {
                 const result = {
                     // ✅ CRITICAL: Include sessionId
                     sessionId: this.sessionId,
                     userId: this.userId,
                     
                     // Game result
-                    success: this.towers[2].length === this.numDisks,
+                    success: success,
                     score: this.score,
                     moves: this.moves,
                     optimal: optimal,
@@ -937,21 +927,25 @@
                     try {
                         tg.sendData(JSON.stringify(result));
                         console.log('✅ Data sent successfully');
+                        
+                        // After sending, show the result modal
+                        setTimeout(() => {
+                            document.getElementById('sendingOverlay').classList.remove('show');
+                            this.showResultModal(success, elapsed, optimal);
+                        }, 1000);
                     } catch (error) {
                         console.error('❌ Error sending data:', error);
                         document.getElementById('sendingOverlay').classList.remove('show');
                         tg.showAlert('Error sending result: ' + error.message);
+                        // Still show modal even if sending fails
+                        this.showResultModal(success, elapsed, optimal);
                     }
                 }, 500);
             }
             
-            closeModal() {
-                document.getElementById('resultModal').classList.remove('show');
-                this.restart();
-            }
-            
-            restart() {
-                this.initGame();
+            closeApp() {
+                // Close the Telegram Web App
+                tg.close();
             }
             
             updateStats() {
